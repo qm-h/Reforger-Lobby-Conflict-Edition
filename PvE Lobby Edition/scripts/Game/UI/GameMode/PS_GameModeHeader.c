@@ -64,7 +64,9 @@ class PS_GameModeHeader : ScriptedWidgetComponent
 		m_hButtonLobby.m_OnClicked.Insert(Action_LobbyOpen);
 		m_hButtonInGame.m_OnClicked.Insert(Action_InGameOpen);
 		m_hButtonBriefing.m_OnClicked.Insert(Action_BriefingOpen);
-		m_hButtonDebriefing.m_OnClicked.Insert(Action_DebriefingOpen);
+		// Persistent PvE (PROJECT.md): debriefing is removed. Hide its header button
+		// and do not wire its click handler so no UI path opens the debriefing menu.
+		m_wButtonDebriefing.SetVisible(false);
 		
 		m_bButtonAdvance = PS_GameModeHeaderButton.Cast(w.FindAnyWidget("AdvanceButton").FindHandler(PS_GameModeHeaderButton));
 		m_wAdvanceImage = ImageWidget.Cast(w.FindAnyWidget("AdvanceButton").FindAnyWidget("AdvanceImage"));
@@ -239,16 +241,6 @@ class PS_GameModeHeader : ScriptedWidgetComponent
 	}
 	void Action_DebriefingOpen(SCR_ButtonBaseComponent button)
 	{
-		PlayerController playerController = GetGame().GetPlayerController();
-		PS_PlayableControllerComponent playableController = PS_PlayableControllerComponent.Cast(playerController.FindComponent(PS_PlayableControllerComponent));
-		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
-		SCR_EGameModeState state = gameMode.GetState();
-		PlayerManager playerManager = GetGame().GetPlayerManager();
-		EPlayerRole playerRole = playerManager.GetPlayerRoles(playerController.GetPlayerId());
-		
-		if (!PS_PlayersHelper.IsAdminOrServer())
-			if (state != SCR_EGameModeState.DEBRIEFING) return;
-		
-		playableController.SwitchToMenu(SCR_EGameModeState.DEBRIEFING);
+		// Persistent PvE (PROJECT.md): debriefing removed. No-op so nothing opens it.
 	}
 }

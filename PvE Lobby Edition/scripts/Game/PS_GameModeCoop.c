@@ -743,6 +743,23 @@ class PS_GameModeCoop : SCR_BaseGameMode
 
 	void TryRespawn(RplId playableId, int playerId)
 	{
+		// Persistent PvE (PROJECT.md #4): a dead player always returns to the
+		// deployment lobby to redeploy. No mission auto-respawn / faction respawn-count.
+		// Release the dead playable and put the player back on the lobby entity...
+		SwitchToInitialEntity(playerId);
+		// ...then re-open the deployment lobby (CoopLobby) on the dead player's client.
+		if (playerId > 0)
+		{
+			SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(playerId));
+			if (playerController)
+			{
+				PS_PlayableControllerComponent playableController = playerController.PS_GetPLayableComponent();
+				if (playableController)
+					playableController.SwitchToMenuServer(SCR_EGameModeState.SLOTSELECTION);
+			}
+		}
+
+		/* Legacy mission-respawn path — disabled for the persistent PvE lobby (kept for reference).
 		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
 		if (playableManager && playableId != RplId.Invalid() && playableManager.GetPlayableById(playableId))
 		{
@@ -777,6 +794,7 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		}
 
 		SwitchToInitialEntity(playerId);
+		*/
 	}
 
 	void Respawn(int playerId, PS_RespawnData respawnData)

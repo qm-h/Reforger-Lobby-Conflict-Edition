@@ -104,11 +104,11 @@ class PS_PlayableControllerComponent : ScriptComponent
 				GetGame().GetCallqueue().Call(ApplyPlayable);
 				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.FadeToGame);
 				break;
+			// Persistent PvE (PROJECT.md): debriefing removed. These states are
+			// unreachable now (state frozen in GAME); never open the debriefing menu.
 			case SCR_EGameModeState.DEBRIEFING:
-				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.DebriefingMenu);
 				break;
 			case SCR_EGameModeState.POSTGAME:
-				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.DebriefingMenu);
 				break;
 		}
 	}
