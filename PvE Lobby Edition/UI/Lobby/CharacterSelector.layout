@@ -1,0 +1,263 @@
+ButtonWidgetClass {
+ Name "CharacterSelector"
+ Slot LayoutSlot "{5D6D352925B78E4D}" {
+ }
+ Color 0 1 0.019 0
+ components {
+  PS_CharacterSelector "{5EA716114A6558BF}" {
+   m_sSoundClicked ""
+   m_BackgroundDefault 0 0 0 0.314
+   m_BackgroundHovered 0.051 0.051 0.051 0.314
+   m_BackgroundSelectedHovered 0.76 0.392 0.08 0.3
+   m_BackgroundClicked 0.76 0.392 0.08 0.3
+  }
+ }
+ {
+  OverlayWidgetClass "{5D6E8206FB6C118E}" {
+   Name "Overlay"
+   Slot ButtonWidgetSlot "{5D6E8206FB6C11F3}" {
+    Padding 8 8 8 0
+   }
+   {
+    FrameWidgetClass "{5D6D352B99AEE9BB}" {
+     Name "FCharacterSelector"
+     Slot OverlayWidgetSlot "{5D6E820833F19127}" {
+     }
+     {
+      ImageWidgetClass "{5D6E820689F956E2}" {
+       Name "Background"
+       Slot FrameWidgetSlot "{5D6E8206B132EE77}" {
+        OffsetLeft 0
+        OffsetTop 0
+        SizeX 608
+        OffsetRight -608
+        SizeY 40
+        OffsetBottom -40
+       }
+      }
+      ImageWidgetClass "{5D6D1B9A2749B71D}" {
+       Name "CharacterFactionColor"
+       Slot FrameWidgetSlot "{5D6D1B9A2749B73B}" {
+        OffsetLeft 0
+        OffsetTop 0
+        SizeX 6
+        OffsetRight -6
+        SizeY 40
+        OffsetBottom -40
+       }
+       Color 0.376 0.749 0.749 1
+      }
+      ScaleWidgetClass "{5E7CF0582185DC16}" {
+       Name "Scale0"
+       Slot FrameWidgetSlot "{5E7CF0582185DC43}" {
+        PositionX 6
+        OffsetLeft 6
+        PositionY 0
+        OffsetTop 0
+        SizeX 40
+        OffsetRight -46
+        SizeY 40
+        OffsetBottom -40
+       }
+       "Inherit Color" 1
+       "Scale Mode" "Scale to fill"
+       {
+        FrameWidgetClass "{5E7CF059F21E70B6}" {
+         Name "Frame0"
+         Slot AlignableSlot "{5E7CF059F21E7098}" {
+         }
+         "Inherit Color" 1
+         {
+          ImageWidgetClass "{5E7CF0476D8FEDDF}" {
+           Name "UnitIcon"
+           Slot FrameWidgetSlot "{5E7CF059F272107C}" {
+            Anchor 0 0 0 0
+            PositionX -17
+            OffsetLeft -17
+            PositionY -17
+            OffsetTop -17
+            SizeX 74
+            OffsetRight -57
+            SizeY 74
+            OffsetBottom -57
+           }
+           "Inherit Color" 1
+           Texture "{00B30C29FAF85E1C}UI/Textures/Editor/EditableEntities/Characters/EditableEntity_Character_AntiTank.edds"
+           Size 64 64
+          }
+         }
+        }
+       }
+      }
+      TextWidgetClass "{5D6D1B99A45E5176}" {
+       Name "CharacterClassName"
+       Slot FrameWidgetSlot "{5D6D1B99A45E509C}" {
+        PositionX 46
+        OffsetLeft 46
+        OffsetTop 0
+        SizeX 238
+        OffsetRight -284
+        SizeY 40
+        OffsetBottom -40
+       }
+       Color 0.855 0.855 0.855 0.819
+       Text "Rifleman"
+       "Font Size" 18
+       "Min Font Size" 16
+       "Vertical Alignment" Center
+       FontProperties FontProperties "{646146441C8D15FF}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      ImageWidgetClass "{5D6D1B995C4BBFB9}" {
+       Name "StateIcon"
+       Slot FrameWidgetSlot "{5D6D1B99A45E509C}" {
+        PositionX 290
+        OffsetLeft 290
+        PositionY 0
+        OffsetTop 0
+        SizeX 40
+        OffsetRight -330
+        SizeY 40
+        OffsetBottom -40
+       }
+       Texture "{D17288006833490F}UI/Textures/Icons/icons_wrapperUI-32.imageset"
+       Image "careerCircleOutline"
+       Size 32 32
+      }
+      RichTextWidgetClass "{5D6D1B99172B8829}" {
+       Name "CharacterStatus"
+       Slot FrameWidgetSlot "{5D6D1B99A45E509C}" {
+        PositionX 336
+        OffsetLeft 336
+        OffsetTop 0
+        SizeX 220
+        OffsetRight -556
+        SizeY 40
+        OffsetBottom -40
+       }
+       Text "Player"
+       "Font Size" 18
+       "Min Font Size" 18
+       "Vertical Alignment" Center
+      }
+      ButtonWidgetClass "{5EA90318AA804736}" {
+       Name "StateButton"
+       Slot FrameWidgetSlot "{5EA8C93F5E685F59}" {
+        Anchor 0 0 0 0
+        PositionX 290
+        OffsetLeft 290
+        PositionY 0
+        OffsetTop 0
+        SizeX 40
+        OffsetRight -330
+        SizeY 40
+        OffsetBottom -40
+       }
+       "Ignore Cursor" 1
+       Color 0 1 0.019 0
+       "Inherit Color" 1
+       components {
+        SCR_ButtonBaseComponent "{5EAB23942F4C5DCF}" {
+         m_sSoundHovered ""
+         m_sSoundClicked ""
+         m_BackgroundDefault 1 1 1 0
+         m_BackgroundHovered 1 1 1 0.162
+         m_BackgroundSelected 1 1 1 0
+         m_BackgroundSelectedHovered 1 1 1 0.162
+         m_BackgroundClicked 1 1 1 0
+         m_bShowBorderOnFocus 0
+         m_bNoBorderAnimation 1
+        }
+       }
+       "no focus" 1
+       {
+        FrameWidgetClass "{5EA90318AA804738}" {
+         Name "DisconnectionButtonFrame"
+         Slot ButtonWidgetSlot "{5EA8C93CB4241314}" {
+         }
+         "Inherit Color" 1
+         {
+          ImageWidgetClass "{5EA90318AA804739}" {
+           Name "Background"
+           Slot FrameWidgetSlot "{5D6E8206B132EE77}" {
+            PositionX 0
+            OffsetLeft 0
+            PositionY 0
+            OffsetTop 0
+            SizeX 40
+            OffsetRight -40
+            SizeY 40
+            OffsetBottom -40
+           }
+          }
+         }
+        }
+       }
+      }
+      OverlayWidgetClass "{5EB69C71DE39ECB3}" : "{DAAA8D092128D446}UI/Util/HideableButton.layout" {
+       Name "VoiceHideableButton"
+       Slot FrameWidgetSlot "{5EB1176DC507EF2D}" {
+        PositionX 568
+        OffsetLeft 568
+        PositionY 0
+        OffsetTop 0
+        SizeX 40
+        OffsetRight -608
+        SizeY 40
+        OffsetBottom -40
+       }
+       components {
+        PS_VoiceButton "{5EB11770B0438906}" {
+        }
+       }
+       {
+        ImageWidgetClass "{5EB1176784E2EFB5}" {
+         Prefab "{5EB1176784E2EFB5}"
+         Size 40 40
+        }
+        ButtonWidgetClass "{5EB1176E3DB20C7A}" {
+         Prefab "{5EB1176E3DB20C7A}"
+         "Ignore Cursor" 1
+         {
+          FrameWidgetClass "{5EB1176E3DB20C7C}" {
+           Prefab "{5EB1176E3DB20C7C}"
+           {
+            ImageWidgetClass "{5EB1176E3DB20C7D}" {
+             Prefab "{5EB1176E3DB20C7D}"
+             Slot FrameWidgetSlot "{5D6E8206B132EE77}" {
+              OffsetLeft 0
+              OffsetTop 0
+              SizeX 40
+              OffsetRight -40
+              SizeY 40
+              OffsetBottom -40
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+      PanelWidgetClass "{5D6F14915F970C15}" {
+       Name "Border"
+       Slot FrameWidgetSlot "{5D6F1490EBB9691E}" {
+        PositionX 0
+        OffsetLeft 0
+        PositionY 0
+        OffsetTop 0
+        SizeX 608
+        OffsetRight -608
+        SizeY 40
+        OffsetBottom -40
+       }
+       Color 0.761 0.392 0.078 1
+       style pixel_outline
+      }
+     }
+    }
+   }
+  }
+ }
+}

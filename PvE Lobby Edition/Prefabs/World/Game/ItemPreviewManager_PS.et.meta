@@ -1,0 +1,15 @@
+MetaFileClass {
+ Name "{AB5D049A3AB43FC0}Prefabs/World/Game/ItemPreviewManager_PS.et"
+ Configurations {
+  EntityTemplateResourceClass PC {
+  }
+  EntityTemplateResourceClass XBOX_ONE : PC {
+  }
+  EntityTemplateResourceClass XBOX_SERIES : PC {
+  }
+  EntityTemplateResourceClass PS4 : PC {
+  }
+  EntityTemplateResourceClass HEADLESS : PC {
+  }
+ }
+}

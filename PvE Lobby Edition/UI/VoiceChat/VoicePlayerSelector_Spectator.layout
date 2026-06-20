@@ -1,0 +1,22 @@
+ButtonWidgetClass : "{086F282C8CE692F1}UI/VoiceChat/VoicePlayerSelector.layout" {
+ {
+  FrameWidgetClass "{64648C878B4FD9DA}" {
+   Prefab "{64648C878B4FD9DA}"
+   {
+    OverlayWidgetClass "{5EB1176D2E673C6D}" {
+     Prefab "{5EB1176D2E673C6D}"
+     Slot FrameWidgetSlot "{5EB1176DC507EF2D}" {
+      PositionX 255
+      OffsetLeft 255
+      PositionY 0
+      OffsetTop 0
+      SizeX 44
+      OffsetRight -299
+      SizeY 44
+      OffsetBottom -44
+     }
+    }
+   }
+  }
+ }
+}

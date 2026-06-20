@@ -1,0 +1,28 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ components {
+  PS_MissionDescriptionContentUI "{5EC27C7C182EA2DF}" {
+  }
+  PS_MissionDescriptionEditableUI "{5EE526C61B2016C3}" {
+  }
+ }
+ {
+  RichTextWidgetClass "{5EE526C6634AB45A}" {
+   Name "RichTextEditable"
+   Slot FrameWidgetSlot "{5EC27C78E8293EA6}" {
+    PositionX 15
+    OffsetLeft 15
+    PositionY 15
+    OffsetTop 15
+    SizeX 465
+    OffsetRight -480
+    SizeY 586
+    OffsetBottom -601
+   }
+   Text ""
+   "Font Size" 20
+   "Min Font Size" 20
+   Wrap 1
+  }
+ }
+}

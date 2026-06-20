@@ -1,0 +1,41 @@
+FrameWidgetClass {
+ Name "WaitScreen"
+ "Z Order" 9
+ {
+  OverlayWidgetClass "{5EB4B0CB2DF0458F}" : "{01FD644AD2B6317D}UI/layouts/Menus/Common/MenuBackground.layout" {
+   Name "MenuBackground0"
+   Slot FrameWidgetSlot "{552C9A0A8526D2AD}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 0
+    OffsetRight 0
+    SizeY 0
+    OffsetBottom 0
+   }
+  }
+  TextWidgetClass "{60DB5B8BA8937C0B}" {
+   Name "InfoText"
+   Slot FrameWidgetSlot "{60DB5B8BA8937C65}" {
+    Anchor 0 0 1 1
+    PositionX 589
+    PositionY 279
+    SizeX -917
+    OffsetRight 0
+    SizeY -556
+    OffsetBottom 0
+   }
+   Text "Loading"
+   "Font Size" 64
+   "Min Font Size" 64
+   "Horizontal Alignment" Center
+   "Vertical Alignment" Center
+   Wrap 1
+   FontProperties FontProperties "{60DCA242801B1ED3}" {
+    Font "{E2CBA6F76AAA42AF}UI/Fonts/Roboto/Roboto_Regular.fnt"
+    OutlineSize 1
+   }
+  }
+ }
+}

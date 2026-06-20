@@ -1,0 +1,110 @@
+FrameWidgetClass {
+ Name "VoiceChatFrame"
+ components {
+  PS_VoiceChatList "{5EB1176278105B6B}" {
+  }
+ }
+ {
+  BlurWidgetClass "{60DB2B5B1B885EF3}" {
+   Name "VoiceChatBlure"
+   Slot FrameWidgetSlot "{5EAF5684AADFB3B7}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 480
+    OffsetRight -480
+    SizeY 800
+    OffsetBottom -800
+   }
+   Intensity 0.3
+  }
+  ImageWidgetClass "{5EB2900030AFF403}" {
+   Name "VoiceChatBackground"
+   Slot FrameWidgetSlot "{5EAF5684AADFB3B7}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 480
+    OffsetRight -480
+    SizeY 800
+    OffsetBottom -800
+   }
+   Opacity 0.9
+   Color 0.007 0.012 0.014 0.9
+  }
+  FrameWidgetClass "{5EB2900030AFF404}" {
+   Name "VoiceChatHeaderFrame"
+   Slot FrameWidgetSlot "{5EAF568435415315}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 480
+    OffsetRight -480
+    SizeY 39
+    OffsetBottom -39
+   }
+   {
+    ImageWidgetClass "{5EB2900030AFF405}" {
+     Name "VoiceChatHeaderBackground"
+     Slot FrameWidgetSlot "{5EAF5684AADFB3B7}" {
+      PositionX 0
+      OffsetLeft 0
+      PositionY 0
+      OffsetTop 0
+      SizeX 480
+      OffsetRight -480
+      SizeY 39
+      OffsetBottom -39
+     }
+     Color 0.007 0.012 0.014 1
+    }
+    OverlayWidgetClass "{5EB2900030AFF406}" {
+     Name "StepsHeaderTextOverlay"
+     Slot FrameWidgetSlot "{5EB0E9ED5655F81D}" {
+      PositionX 0
+      OffsetLeft 0
+      PositionY 0
+      OffsetTop 0
+      SizeX 376
+      OffsetRight -376
+      SizeY 39
+      OffsetBottom -39
+     }
+     {
+      TextWidgetClass "{5EB2900030AFF407}" {
+       Name "VoiceChatHeaderText"
+       Slot OverlayWidgetSlot "{5EB0E9E7729FE3E7}" {
+        HorizontalAlign 0
+        Padding 8 0 0 0
+       }
+       Text "#PS-VoNRoom_Header"
+      }
+     }
+    }
+   }
+  }
+  ScrollLayoutWidgetClass "{5EB2900030AFF408}" {
+   Name "RoomsListScroll"
+   Slot FrameWidgetSlot "{5EB1000AD8290B3B}" {
+    PositionX 10
+    OffsetLeft 10
+    PositionY 49
+    OffsetTop 49
+    SizeX 470
+    OffsetRight -480
+    SizeY 751
+    OffsetBottom -800
+   }
+   {
+    VerticalLayoutWidgetClass "{5EB2900030AFF409}" {
+     Name "RoomsList"
+     Slot AlignableSlot "{5EB11576E9D62E23}" {
+     }
+    }
+   }
+  }
+ }
+}

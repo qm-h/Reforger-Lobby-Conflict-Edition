@@ -1,0 +1,149 @@
+FrameWidgetClass {
+ Name "PlayMenu"
+ "Z Order" 9
+ {
+  OverlayWidgetClass "{5EBC73432486C71A}" : "{01FD644AD2B6317D}UI/layouts/Menus/Common/MenuBackground.layout" {
+   Name "MenuBackground"
+   Slot FrameWidgetSlot "{552C9A0A8526D2AD}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 0
+    OffsetRight 0
+    SizeY 0
+    OffsetBottom 0
+   }
+  }
+  FrameWidgetClass "{5EBC73432499FC63}" : "{F43237F55B38B45C}UI/GameModeHeader/GameModeHeader.layout" {
+   Name "GameModeHeader"
+   Slot FrameWidgetSlot "{5EB10000F5F77EA0}" {
+    PositionX -960
+    OffsetLeft 0
+    OffsetTop 0
+    SizeX 1920
+    OffsetRight 0
+    SizeY 93
+    OffsetBottom -93
+   }
+  }
+  FrameWidgetClass "{5EBC7343249839D5}" : "{B7A765172F0BD4D9}UI/layouts/Common/GameVersionWatermark.layout" {
+   Name "EarlyAccessRoot"
+   Slot FrameWidgetSlot "{5CEE96372B5D270B}" {
+    PositionX 0.214
+    OffsetLeft 0
+    PositionY 2.127
+    OffsetTop 0
+    SizeX 0
+    OffsetRight 0
+    SizeY 0
+    OffsetBottom 0
+   }
+   Opacity 1
+  }
+  FrameWidgetClass "{5EBC7342B7ED9735}" {
+   Name "ReportFrame"
+   Slot FrameWidgetSlot "{5EBC7342B7ED970F}" {
+    Anchor 0.5 0.5 0.5 0.5
+    PositionX -960
+    OffsetLeft -960
+    PositionY -437
+    OffsetTop -437
+    SizeX 1920
+    OffsetRight -960
+    SizeY 977
+    OffsetBottom -540
+   }
+   "Z Order" 1
+   {
+    VerticalLayoutWidgetClass "{5EBC73425FDE8F03}" {
+     Name "ReportVerticalLayout"
+     Slot FrameWidgetSlot "{5EBC73425FDE8F18}" {
+      Anchor 0 0 1 1
+      PositionX 0
+      OffsetLeft 0
+      PositionY 0
+      OffsetTop 0
+      SizeX 0
+      OffsetRight 0
+      SizeY -849
+      OffsetBottom 0
+     }
+     {
+      SizeLayoutWidgetClass "{5EBC734233AECCAC}" {
+       Name "HeaderSizeLayout"
+       Slot LayoutSlot "{5EBC734233AECC91}" {
+       }
+       AllowHeightOverride 1
+       HeightOverride 128
+       {
+        OverlayWidgetClass "{5EBC73422BF95C85}" {
+         Name "HeaderOverlay"
+         Slot AlignableSlot "{5EBC7342339CEBC1}" {
+         }
+         {
+          VerticalLayoutWidgetClass "{5EBC73415A4B2DA9}" {
+           Name "VerticalLayout"
+           Slot OverlayWidgetSlot "{5EBC73415A4B2D84}" {
+           }
+           {
+            TextWidgetClass "{5EBC73415F360710}" {
+             Name "HeaderLabel"
+             Slot LayoutSlot "{5EBC73415F3606EF}" {
+             }
+             Text "#ps-debrief_afteraction"
+             "Font Size" 42
+             "Min Font Size" 42
+            }
+            TextWidgetClass "{5EBC73417383E478}" {
+             Name "HeaderResultLabe"
+             Slot LayoutSlot "{5EBC73415F3606EF}" {
+              HorizontalAlign 1
+              Padding 0 0 0 0
+             }
+             "Is Visible" 0
+             Text "USSR Total Victory"
+             "Font Size" 20
+             "Min Font Size" 20
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+      SizeLayoutWidgetClass "{5EBC734188EF9931}" {
+       Name "BodySizeLayout"
+       Slot LayoutSlot "{5EBC734188EF9918}" {
+       }
+       Clipping True
+       AllowHeightOverride 1
+       HeightOverride 750
+       {
+        HorizontalLayoutWidgetClass "{5EBC7341F98515CE}" {
+         Name "BodyHorizontalLayout"
+         Slot AlignableSlot "{5EBC734188DD6276}" {
+         }
+        }
+       }
+      }
+      SizeLayoutWidgetClass "{5EBC7341BE74E391}" {
+       Name "FooterSizeLayout"
+       Slot LayoutSlot "{5EBC734188EF9918}" {
+       }
+       AllowHeightOverride 1
+       HeightOverride 99
+       {
+        HorizontalLayoutWidgetClass "{5EBC7341BE74E394}" {
+         Name "FooterHorizontalLayout"
+         Slot AlignableSlot "{5EBC734188DD6276}" {
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

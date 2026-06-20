@@ -1,0 +1,6 @@
+SCR_AIGroup : "{6307F42403E9B8A4}Prefabs/Groups/INDFOR/Group_FIA_SharpshooterTeam.et" {
+ ID "0000000000000001"
+ m_aUnitPrefabSlots {
+  "{793FBF6474104BA3}Prefabs/Characters/Factions/INDFOR/FIA/Character_FIA_Scout_P.et" "{950D59E028D3F268}Prefabs/Characters/Factions/INDFOR/FIA/Character_FIA_Sharpshooter_P.et"
+ }
+}

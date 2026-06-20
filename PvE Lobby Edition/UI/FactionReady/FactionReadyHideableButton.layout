@@ -1,0 +1,50 @@
+OverlayWidgetClass : "{DAAA8D092128D446}UI/Util/HideableButton.layout" {
+ Name "FactionReadyHideableButton"
+ Slot LayoutSlot "{61B4C308CEBD75B8}" {
+ }
+ components {
+  PS_FactionReadyWidgetComponent "{618EDD66FD8B5855}" {
+  }
+ }
+ {
+  ImageWidgetClass "{618EDD66C75AABCE}" {
+   Name "BackgroundFaction"
+   Slot OverlayWidgetSlot "{5EB117705B84CDF5}" {
+    Padding 6 6 6 6
+   }
+   Color 0.502 0 0 1
+   Image "Wait"
+   Size 48 48
+  }
+  ImageWidgetClass "{5EB1176784E2EFB5}" {
+   Prefab "{5EB1176784E2EFB5}"
+   Slot OverlayWidgetSlot "{5EB117705B84CDF5}" {
+   }
+   Texture "{2EFEA2AF1F38E7F0}UI/Textures/Icons/icons_wrapperUI-64.imageset"
+   Image "disable"
+   Size 64 64
+  }
+  ButtonWidgetClass "{5EB1176E3DB20C7A}" {
+   Prefab "{5EB1176E3DB20C7A}"
+   {
+    FrameWidgetClass "{5EB1176E3DB20C7C}" {
+     Prefab "{5EB1176E3DB20C7C}"
+     {
+      ImageWidgetClass "{5EB1176E3DB20C7D}" {
+       Prefab "{5EB1176E3DB20C7D}"
+       Slot FrameWidgetSlot "{5D6E8206B132EE77}" {
+        OffsetLeft 0
+        OffsetTop 0
+        SizeX 40
+        OffsetRight -40
+        SizeY 40
+        OffsetBottom -40
+       }
+       Size 60 60
+      }
+     }
+    }
+   }
+  }
+ }
+}
