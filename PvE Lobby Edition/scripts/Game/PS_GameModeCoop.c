@@ -904,11 +904,13 @@ class PS_GameModeCoop : SCR_BaseGameMode
 			case SCR_EGameModeState.BRIEFING:
 				StartGame();
 				break;
+			// Persistent PvE server (see PROJECT.md): once in GAME the mission runs
+			// 24/7. Never auto-advance to DEBRIEFING/POSTGAME. This also neutralizes
+			// objective-completion ending the match (PS_Objective calls
+			// AdvanceGameState(GAME), which now no-ops here).
 			case SCR_EGameModeState.GAME:
-				SetGameModeState(SCR_EGameModeState.DEBRIEFING);
 				break;
-			case SCR_EGameModeState.DEBRIEFING:
-				SetGameModeState(SCR_EGameModeState.POSTGAME);
+			case SCR_EGameModeState.DEBRIEFING: // unreachable, kept for enum completeness
 				break;
 			case SCR_EGameModeState.POSTGAME:
 				break;
