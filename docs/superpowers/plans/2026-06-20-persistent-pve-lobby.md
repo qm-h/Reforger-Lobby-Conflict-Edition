@@ -31,8 +31,10 @@ framework. Server-authoritative replication (`Replication.IsServer()`, `Rpc`, `[
 - Never edit `O_*` files (read-only vanilla reference). Edit `CEAF_*`, `PS_*`, `PS_M_SCR_*`.
 - Server-gate every state mutation; replicate to clients.
 
-> **Path note:** all source paths below are relative to
-> `PvE Lobby Edition/scripts/Game/` unless stated otherwise.
+> **Path note:** editable source paths below are relative to
+> `PvE Lobby Edition/scripts/Game/` unless stated otherwise. **`O_*` reference
+> files live under `PvE Lobby Edition/reference/Game/`** (same sub-tree, NOT
+> compiled) — when a step says "Read `.../O_*.c`", read it from `reference/Game/`.
 
 ---
 
@@ -85,6 +87,15 @@ Lowest-risk, independent of the data rebind. Delivers the 24/7 behavior first.
   ```
 
 ### Task A2: Make "Play" a per-player deploy, not a global advance
+
+> **Status (verified in code): already satisfied — no code change needed.**
+> The per-player deploy path already exists: lobby `PS_CoopLobby.Action_Ready`
+> (the Start button), when state is `GAME`, calls
+> `PS_PlayableControllerComponent.SwitchToMenu(GAME)` → `ApplyPlayable()` →
+> `RPC_ApplyPlayable` (server) → `PS_PlayableManager.ApplyPlayable(thisPlayerId)`,
+> spawning **only the requesting player** with no global state advance. The
+> header admin button `Action_Advance` is inert in `GAME` (`if GAME return`).
+> The plan's proposed `RPC_RequestDeploy` is **redundant** and was not added.
 
 **Files:**
 - Modify: `UI/GameMode/PS_GameModeHeader.c` — `Action_Advance()`.
@@ -141,6 +152,12 @@ Lowest-risk, independent of the data rebind. Delivers the 24/7 behavior first.
 
 ### Task A3: Death returns the player to the deployment lobby
 
+> **Status: implemented.** `PS_GameModeCoop.TryRespawn` now always routes a dead
+> player to the lobby: `SwitchToInitialEntity(playerId)` (release playable + put
+> player on the lobby entity) then `SwitchToMenuServer(SLOTSELECTION)` so the
+> dead player's client re-opens `PS_CoopLobby`. The legacy mission-respawn /
+> faction respawn-count body is kept commented out for reference.
+
 **Files:**
 - Modify: `Playable/PS_PlayableComponent.c` — `OnDamageStateChange()` / `TryRespawn()` (~212-228).
 - Modify: `PS_GameModeCoop.c` — `TryRespawn()` path if it forces mission respawn.
@@ -172,6 +189,12 @@ Lowest-risk, independent of the data rebind. Delivers the 24/7 behavior first.
   ```
 
 ### Task A4: Briefing optional, debriefing removed from UI/nav
+
+> **Status: implemented.** `PS_GameModeHeader`: debriefing header button hidden
+> (`SetVisible(false)`) and its click handler unwired; `Action_DebriefingOpen`
+> is now a no-op. `PS_PlayableControllerComponent.SwitchToMenu` `DEBRIEFING`/
+> `POSTGAME` cases no longer open the debriefing menu. Briefing button/screen
+> left untouched (optional, non-blocking).
 
 **Files:**
 - Modify: `UI/GameMode/PS_GameModeHeader.c` — briefing/lobby nav actions.
@@ -207,6 +230,16 @@ re-enables the neutered vanilla stack. Each task reads the matching `O_*` refere
 exact signatures.
 
 ### Task B1: Re-enable the vanilla respawn/spawn-point stack
+
+> **Status: SKIPPED — not needed (verified in code + Workbench).** The game mode
+> entity (`PS_GameMode_Lobby1`) carries a `PS_DummyRespawnSystemComponent` with
+> **no `SCR_SpawnLogic` assigned**, so re-enabling vanilla `OnInit` would null-ref
+> and re-enabling `OnPlayerRegistered_S`/`OnPlayerAuditSuccess_S` would fight the
+> working `PS_PlayableManager` lobby (auto-spawn on join + vanilla respawn menu).
+> B5 does **not** need the respawn system: faction deploy points come from the
+> independent static registry `SCR_SpawnPoint.GetSpawnPointsForFaction(factionKey)`
+> (auto-registered, with `Event_SpawnPointAdded/Removed` invokers). Leave
+> `PS_M_SCR_RespawnSystemComponent` neutered.
 
 **Files:**
 - Modify: `GameMode/Respawn/PS_M_SCR_RespawnSystemComponent.c` (currently all overrides
@@ -337,11 +370,19 @@ exact signatures.
 - Read: `GameMode/Respawn/O_SCR_PlayerSpawnPoint.c`,
   `GameMode/Respawn/O_SCR_PlayerSpawnPointManagerComponent.c`.
 
+> **Correction (verified):** faction deploy points are `SCR_SpawnPoint` (placed,
+> faction-affiliated, auto-registered), **not** `SCR_PlayerSpawnPoint` (which is the
+> spawn-on-player / deployable-radio system in `SCR_PlayerSpawnPointManagerComponent`,
+> one per connected player — wrong source). Use the `SCR_SpawnPoint` static API:
+> `GetSpawnPointsForFaction(factionKey)`, `GetSpawnPointByRplId`, per-point
+> `GetFactionKey()` / `GetSpawnPointName()` / `GetOrigin()`, and the
+> `Event_SpawnPointAdded/Removed` invokers for live map updates.
+
 **Interfaces:**
-- Consumes: `SCR_PlayerSpawnPointManagerComponent` faction spawn points; lobby selection
+- Consumes: `SCR_SpawnPoint.GetSpawnPointsForFaction(factionKey)`; lobby selection
   (faction/group/role/loadout from B2–B4).
-- Produces: `RPC_RequestDeploy` spawns the player at the chosen `SCR_PlayerSpawnPoint`
-  with the chosen loadout, joined to the chosen group.
+- Produces: deploy spawns the player at the chosen `SCR_SpawnPoint`'s position
+  (via the existing `PS_PlayableManager` spawn path) with the chosen loadout/group.
 
 - [ ] **Step 1: Read** the spawn-point references and the existing map panel in the lobby.
 
