@@ -1,0 +1,8 @@
+GameProject {
+ ID "PvELobbyEdition"
+ GUID "69A8A9F6D2B67EBE"
+ TITLE "PvE Lobby Edition"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+}
