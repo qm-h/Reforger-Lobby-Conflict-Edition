@@ -7,16 +7,22 @@ modded class SCR_RespawnComponent : RespawnComponent
 {
 	override void RequestPlayerSuicide()
 	{
+		Print("[PVE RESPAWN] RequestPlayerSuicide() called (pause-menu respawn confirm)", LogLevel.NORMAL);
 		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		if (playerController)
 		{
 			PS_PlayableControllerComponent playableController = playerController.PS_GetPLayableComponent();
 			if (playableController)
 			{
-				Print("[PVE RESPAWN] pause-menu respawn -> return to lobby", LogLevel.NORMAL);
+				Print("[PVE RESPAWN] -> PS_RequestReturnToLobby (playableController OK)", LogLevel.NORMAL);
 				playableController.PS_RequestReturnToLobby();
 				return;
 			}
+			Print("[PVE RESPAWN] no PS_PlayableControllerComponent on controller -> vanilla suicide", LogLevel.WARNING);
+		}
+		else
+		{
+			Print("[PVE RESPAWN] no local player controller -> vanilla suicide", LogLevel.WARNING);
 		}
 
 		// Fallback: no lobby controller (e.g. admin/spectator) -> vanilla behaviour.

@@ -29,7 +29,6 @@ The active implementation plan lives in
 | Prefix | Meaning | Rule |
 |--------|---------|------|
 | `O_*`  | **Original vanilla** source, read-only reference. Lives under `reference/Game/` (NOT `scripts/`) so the engine never compiles these duplicate class defs. | **NEVER edit.** Read to understand vanilla. Not authoritative for compile. |
-| `CEAF_*` | Team modded override / new class | Editable. Our overrides of vanilla Conflict classes. |
 | `PS_*` | PlayableSelector mod code (inherited) | Editable. Core mod. Keep the `PS_` class names — they are referenced across the inherited codebase, prefabs and layouts; renaming a `PS_` class cascades everywhere. |
 | `PS_M_SCR_*` | Modded vanilla class (`modded class`) | Editable. Patches a base-game class. |
 | `RLCE_*` | **Reforger Lobby Conflict Edition** — new files authored by this rework. The class inside a modded-class file keeps the vanilla name, so the *file* can safely carry the `RLCE_` prefix. | Editable. Preferred prefix for any new file. |

@@ -367,12 +367,19 @@ class PS_PlayableManager : ScriptComponent
 			return;
 		SCR_ChimeraCharacter playableCharacter = playableComponent.GetCharacter();
 		if (!playableCharacter.PS_GetChimeraAIControlComponent())
+		{
+			// Reforger Lobby Conflict Edition: AI agent not ready yet (timing-sensitive on dedicated servers).
+			// Without it the playable is NEVER added to m_aPlayables -> SwitchToDeployedEntity times out
+			// -> deployed player is stranded on the lobby camera ("[PVE APPLY] NULL playable").
+			Print("[PVE REGISTER] BAIL no AIControl/agent for playable=" + playableId + " (not registered, deploy will fail)", LogLevel.WARNING);
 			return;
+		}
 
 		// Save and replicate data
 		PS_PlayableContainer container = playableComponent.GetPlayableContainer();
 		RPC_RegisterPlayable(container);
 		Rpc(RPC_RegisterPlayable, container);
+		Print("[PVE REGISTER] registered playable=" + playableId, LogLevel.NORMAL);
 		SetPlayablePrefab(playableId, playableComponent.GetOwner().GetPrefabData().GetPrefabName());
 		SetPlayableName(playableId, playableComponent.GetName());
 
@@ -384,7 +391,10 @@ class PS_PlayableManager : ScriptComponent
 			SCR_AIGroup playerGroup;
 
 			if (!playableGroup) // Has no group -> broken unit.
+			{
+				Print("[PVE REGISTER] playable=" + playableId + " registered but AI agent has NO parent group (group/callsign setup skipped)", LogLevel.WARNING);
 				return;
+			}
 
 			// If no player, group create new
 			if (!playableGroup.m_PlayersGroup)

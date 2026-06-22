@@ -50,7 +50,6 @@ entities.
 - 🧩 **Conflict-driven lobby** — factions, groups, roles, loadouts and spawn points come from the live Campaign systems.
 - 🪖 **Loadout preview** — see the role's gear before you deploy.
 - 💀 **Death → lobby** — a dead player re-opens the deployment lobby and redeploys.
-- 🛰️ **Objectives are informational** — admins can open/close them in-game; they never end the match.
 
 <div align="center">
 <img src="workshop/reforger-workshop-flare.png" alt="In-game lobby" width="640" />
@@ -75,34 +74,29 @@ entities.
 
 ## 🚀 Installation — add the lobby to your map
 
-There are two ways to ship it: use the **provided mission** as-is, or wire the game
-mode into **your own world**.
+Wire the game mode into **your own world** (Workbench).
 
-### Option A — Run the bundled mission (fastest)
-
-1. Add **Reforger Lobby Conflict Edition** to your server's mod list (and its
-   dependencies above).
-2. Select the bundled mission header **`Missions/ArlandPVELobby.conf`** in your
-   server config.
-3. Launch. The lobby is the default front-end; players pick faction/group/role/
-   loadout/spawn and deploy.
-
-### Option B — Embed the lobby into your own world (Workbench)
+> ⚠️ **Use the Conflict game mode `Lobby_GameMode_Conflict.et`** (class
+> `RLCE_GameModeConflict`). RLCE runs on the full vanilla Conflict
+> (`SCR_GameModeCampaign`), and `Lobby_GameMode_Conflict.et` already nests every
+> Conflict manager the lobby needs.
 
 1. **Add this mod as a dependency** of your addon in the Workbench Project settings.
-2. **Set the game mode.** Place the game-mode prefab
-   **`Prefabs/MP/Modes/PS_GameMode_Lobby.et`** (entity class `PS_GameModeCoop`) in
-   your world, or inherit your own game mode from it.
-3. **Create a mission header** (`SCR_MissionHeaderCampaign`) pointing at your world,
-   like `Missions/ArlandPVELobby.conf`:
-   ```c
-   SCR_MissionHeaderCampaign {
-    World "{YOUR_WORLD_GUID}Worlds/YourWorld.ent"
-    m_sName "Your Server Name"
-    m_iPlayerCount 64
-   }
-   ```
-4. **Place deploy/spawn points** on the map (see Configuration below).
+2. **Place the game mode.** Drop the prefab
+   **`Prefabs/MP/Modes/Conflict/Lobby_GameMode_Conflict.et`** (entity class
+   `RLCE_GameModeConflict`) as the game-mode entity of your world. Place exactly one
+   per world. If you need to customise it, inherit your own prefab from it instead of
+   editing the original.
+3. **Add the Conflict faction manager as a CHILD of the game-mode entity.** Parent a
+   `SCR_CampaignFactionManager` (e.g. `Prefabs/MP/Campaign/CampaignFactionManager.et`)
+   **under** the `Lobby_GameMode_Conflict` entity — not as a separate world entity.
+   Parenting it guarantees the game mode initialises first; a faction manager placed
+   at the world root crashes on load with
+   `NULL pointer ... Variable 'm_OnPlayerDisconnected'` because it tries to subscribe
+   to the game mode before the game mode exists. Do the same for the other Conflict
+   managers you place (loadout manager, bases system).
+4. **Place deploy/spawn points and configure factions/groups/loadouts** (see
+   Configuration below).
 5. Compile in **Workbench** (no script errors), load a local dedicated session, and
    verify the lobby opens and deploy works.
 
@@ -114,13 +108,14 @@ mode into **your own world**.
 ## ⚙️ Configuration — components to set up
 
 The lobby is driven by components on the **game-mode entity**
-(`PS_GameMode_Lobby.et`) and by **Conflict** managers/points placed in the world.
+(`Lobby_GameMode_Conflict.et` — class `RLCE_GameModeConflict`) and by **Conflict**
+managers/points parented under it or placed in the world.
 
 | What | Component / asset | Where | Why |
 |------|-------------------|-------|-----|
-| Game mode | `PS_GameModeCoop` (prefab `PS_GameMode_Lobby.et`) | World root entity | Hosts the lobby, freezes lifecycle in `GAME`. |
+| Game mode | `RLCE_GameModeConflict` (prefab `Prefabs/MP/Modes/Conflict/Lobby_GameMode_Conflict.et`) | World root entity | Hosts the lobby on full Conflict, freezes lifecycle in `GAME`. |
 | Mission data | `PS_MissionDataManager` | On the game-mode entity | Drives lobby data export. |
-| Factions | `SCR_CampaignFactionManager` | Conflict faction setup | Source of the faction list. |
+| Factions | `SCR_CampaignFactionManager` | **Child of the game-mode entity** | Source of the faction list. Must be parented under the game mode. |
 | Groups / roles | `SCR_GroupsManagerComponent` + `SCR_GroupPreset` / `SCR_GroupRolePresetConfig` | Faction config | Source of squads and roles. |
 | Loadouts | `SCR_LoadoutManager` | Faction / arsenal config | Source of selectable loadouts + preview. |
 | Spawn points | `SCR_PlayerSpawnPoint` / `SCR_SpawnPoint` | Placed per faction in the world | Where deploy puts the player. |
@@ -128,12 +123,12 @@ The lobby is driven by components on the **game-mode entity**
 
 **Checklist for a working map:**
 
-- [ ] Game-mode prefab present in the world.
+- [ ] `Lobby_GameMode_Conflict.et` (`RLCE_GameModeConflict`) placed as the world's game mode.
+- [ ] `SCR_CampaignFactionManager` parented **under** the game-mode entity.
 - [ ] At least one **faction** configured via the Campaign faction manager.
 - [ ] At least one **group preset** with **roles** per faction.
 - [ ] At least one **loadout** per role/faction.
 - [ ] At least one **spawn point** per faction, placed on the map.
-- [ ] Mission header points at your world and is selected in server config.
 
 ---
 
@@ -144,7 +139,6 @@ The lobby is driven by components on the **game-mode entity**
 | `RLCE_*` | **Reforger Lobby Conflict Edition** — new files authored by this rework. Preferred prefix for new contributions. |
 | `PS_*` | Inherited PlayableSelector core. Kept as-is — these class names are referenced across the codebase, prefabs and layouts, so renaming a `PS_` class cascades everywhere. |
 | `PS_M_SCR_*` / `RLCE_M_SCR_*` | `modded class` patches of a base-game class. The class keeps the vanilla name; only the file carries the prefix. |
-| `CEAF_*` | Team overrides of vanilla Conflict classes. |
 | `O_*` | Read-only **original vanilla** reference under `reference/Game/` — never edited, not compiled. |
 
 See [`CLAUDE.md`](CLAUDE.md) and [`PROJECT.md`](PROJECT.md) for the full design intent

@@ -28,7 +28,7 @@ framework. Server-authoritative replication (`Replication.IsServer()`, `Rpc`, `[
 - Briefing kept as optional non-blocking info screen; debriefing removed. (PROJECT.md)
 - No automated tests. Each task verifies via **Workbench compile (zero script errors)**
   + **in-game observation** on a local/dedicated test world.
-- Never edit `O_*` files (read-only vanilla reference). Edit `CEAF_*`, `PS_*`, `PS_M_SCR_*`.
+- Never edit `O_*` files (read-only vanilla reference). Edit `PS_*`, `PS_M_SCR_*`, `RLCE_*`.
 - Server-gate every state mutation; replicate to clients.
 
 > **Path note:** editable source paths below are relative to
@@ -288,8 +288,7 @@ exact signatures.
 
 **Files:**
 - Modify: `UI/Lobby/PS_CoopLobby.c` — faction list population (`UpdatePlayerFaction`, faction list build).
-- Read: `Faction/O_SCR_CampaignFaction.c`, `GameMode/FactionManager/O_SCR_CampaignFactionManager.c`,
-  the `CEAF_*` equivalents.
+- Read: `Faction/O_SCR_CampaignFaction.c`, `GameMode/FactionManager/O_SCR_CampaignFactionManager.c`.
 
 **Interfaces:**
 - Consumes: `SCR_CampaignFactionManager.GetCampaignFactionByIndex/Key`, `GetFactionsList`.

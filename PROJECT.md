@@ -33,8 +33,7 @@ the data behind it changes:
 
 Reference vanilla source is provided as read-only `O_*` files under
 `PvE Lobby Edition/reference/Game/` (mirrors the `scripts/Game/` tree; **not
-compiled** — kept out of `scripts/` to avoid duplicate-class errors). Team
-overrides are `CEAF_*`.
+compiled** — kept out of `scripts/` to avoid duplicate-class errors).
 
 ### Lifecycle: persistent server (24/7)
 - The mission **runs forever**. The server never shuts down on its own.
@@ -78,5 +77,3 @@ state, never stops the server. They are purely informational/operational.
 - `reference/Game/.../O_*` — read-only vanilla reference (loadout, groups, faction,
   spawn point). Mirrors `scripts/Game/` paths but lives under `reference/` so the
   engine does not compile the duplicate class definitions.
-- `scripts/Game/.../CEAF_*` — team overrides (`SCR_CampaignFaction`,
-  `SCR_CampaignFactionManager`, `CampaignBasesSystem`).

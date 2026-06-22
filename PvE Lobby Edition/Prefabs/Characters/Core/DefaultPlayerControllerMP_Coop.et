@@ -18,7 +18,7 @@ SCR_PlayerController : "{225E51284CC95CFA}Prefabs/Characters/Core/DefaultPlayerC
    }
   }
   SCR_RespawnComponent "{998227246E6A49E0}" {
-   Enabled 0
+   Enabled 1
    components {
     SCR_FreeSpawnRequestComponent "{5CD2D126A634C24E}" {
      Enabled 0

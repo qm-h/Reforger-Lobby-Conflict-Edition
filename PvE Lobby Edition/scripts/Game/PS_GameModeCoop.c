@@ -583,7 +583,11 @@ class PS_GameModeCoop : SCR_GameModeCampaign
 		return super.HandlePlayerKilled(playerId, playerEntity, killerEntity, killer);
 	}
 
-	// Update state for disconnected and start timer if need (DO NOT DELETE CONTROLED ENTITY)
+	// Reforger Lobby Conflict Edition (persistent PvE): on disconnect we DELETE the deployed body. The legacy flow
+	// kept it alive for reconnect, but on our 24/7 server that body lingered in the world and could even
+	// be persisted across a session save / restart (the player sees their old character on reconnect).
+	// We delete the deployed body (server only, never the lobby camera) and clear the playable link so a
+	// reconnecting player redeploys fresh from the lobby.
 	protected override void OnPlayerDisconnected(int playerId, KickCauseCode cause, int timeout)
 	{
 		PlayerManager playerManager = GetGame().GetPlayerManager();
@@ -595,9 +599,21 @@ class PS_GameModeCoop : SCR_GameModeCampaign
 		if (m_iReconnectTime > 0) GetGame().GetCallqueue().CallLater(RemoveDisconnectedPlayer, m_iReconnectTime, false, playerId);
 
 		IEntity controlledEntity = playerController.GetControlledEntity();
-		if (controlledEntity) {
-			RplComponent rpl = RplComponent.Cast(controlledEntity.FindComponent(RplComponent));
-			rpl.GiveExt(RplIdentity.Local(), false);
+		IEntity initialEntity;
+		if (playableController)
+			initialEntity = playableController.GetInitialEntity();
+
+		// Server-authoritative: unlink the playable and destroy the deployed body so nothing lingers
+		// (or gets persisted). Never touch the lobby camera (initial entity).
+		if (IsMaster())
+		{
+			playableManager.SetPlayerPlayable(playerId, RplId.Invalid());
+			if (controlledEntity && controlledEntity != initialEntity)
+			{
+				Print("[PVE DISCONNECT] deleting deployed body for player=" + playerId, LogLevel.NORMAL);
+				GetGame().GetCallqueue().Call(SCR_EntityHelper.DeleteEntityAndChildren, controlledEntity);
+				controlledEntity = null; // body gone -> skip the reconnect-keep block below
+			}
 		}
 
 		m_OnPlayerDisconnected.Invoke(playerId, cause, timeout);

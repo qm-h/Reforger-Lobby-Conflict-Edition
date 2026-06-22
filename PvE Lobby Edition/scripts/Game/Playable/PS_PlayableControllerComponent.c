@@ -125,6 +125,7 @@ class PS_PlayableControllerComponent : ScriptComponent
 		PS_GameModeCoop gameMode = PS_GameModeCoop.Cast(GetGame().GetGameMode());
 		if (!gameMode)
 			return;
+		Print("[PVE RESPAWN] RPC_PS_RequestReturnToLobby on server for player=" + thisPlayerController.GetPlayerId(), LogLevel.NORMAL);
 
 		// Reforger Lobby Conflict Edition: mirror the (proven) enemy-death path instead of switching menus directly.
 		// Being killed by an enemy is a server-authoritative death that reliably runs
@@ -152,6 +153,7 @@ class PS_PlayableControllerComponent : ScriptComponent
 		}
 
 		// No deployed body to kill -> just (re)open the lobby.
+		Print("[PVE RESPAWN] no live body -> direct ReturnPlayerToLobby player=" + thisPlayerController.GetPlayerId(), LogLevel.NORMAL);
 		gameMode.ReturnPlayerToLobby(thisPlayerController.GetPlayerId());
 	}
 
