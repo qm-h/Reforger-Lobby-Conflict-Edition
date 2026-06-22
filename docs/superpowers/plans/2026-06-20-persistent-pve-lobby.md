@@ -274,6 +274,18 @@ exact signatures.
 
 ### Task B2: Faction list from `SCR_CampaignFactionManager`
 
+> **Status: implemented (Strategy B / solution 1).** Lobby now builds from generated
+> deployment groups, not placed playables. `PS_GameModeCoop.GenerateDeploymentGroups()`
+> (server, once on `OnGameStart`) creates one playable `SCR_AIGroup` per
+> `SCR_GroupRolePresetConfig` of each `IsPlayable()` faction; capacity = preset
+> `m_iGroupSize`, palette = `GetLoadouts()`. `PS_PlayableManager` holds the replicated
+> `groupID -> (faction, presetIndex)` map (`RegisterDeploymentGroup` broadcast +
+> `SendDeploymentGroupsToPlayer` JIP resend on connect), `GetGroupPreset`,
+> `GetDeploymentGroupsForFaction`, per-player selection state
+> (`SetPlayerSelectedGroup/Loadout/Spawn` + `m_eOnPlayerSelectionChange`).
+> `PS_CoopLobby.InitDeployment()` lists playable factions via `GetFactionsList()` +
+> `IsPlayable()`.
+
 **Files:**
 - Modify: `UI/Lobby/PS_CoopLobby.c` — faction list population (`UpdatePlayerFaction`, faction list build).
 - Read: `Faction/O_SCR_CampaignFaction.c`, `GameMode/FactionManager/O_SCR_CampaignFactionManager.c`,
@@ -303,6 +315,15 @@ exact signatures.
   ```
 
 ### Task B3: Group + role lists from `SCR_GroupPreset` / `SCR_GroupRolePresetConfig`
+
+> **Status: implemented (solution 1 — counter + palette).** Per faction, `PS_CoopLobby`
+> creates one `PS_RolesGroup` per generated group (`SetDeploymentGroup(groupID, aiGroup,
+> capacity)`), header shows `name (selected/capacity)` via `GetGroupSelectedCount`.
+> `PS_CharacterSelector` repurposed with a loadout mode (`SetLoadout`): each palette entry
+> is a clickable loadout that calls owner->server `SetSelectedGroup` + `SetSelectedLoadout`
+> + `ChangeFactionKey`. Per-slot lock/kick/pin dropped in deploy mode (guards added).
+> Loadout name/icon resolved via `SCR_LoadoutManager` (`GetLoadoutByResource`). No new
+> `.layout` files (reuses RolesGroup/CharacterSelector layouts).
 
 **Files:**
 - Modify: `UI/Lobby/PS_CoopLobby.c` — group/role list (the CharactersList/GroupList build).

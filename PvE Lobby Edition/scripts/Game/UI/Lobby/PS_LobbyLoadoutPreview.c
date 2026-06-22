@@ -18,6 +18,8 @@ class PS_LobbyLoadoutPreview : SCR_WLibComponentBase
 	protected RplId m_iPlayableId;
 	protected RplId m_iPlayableIdInventory;
 	protected ResourceName m_sPrefabName;
+	// Reforger Lobby Conflict Edition: label used when previewing a loadout palette entry (no placed playable).
+	protected string m_sLoadoutDisplayName;
 	
 	protected PS_ImportantItemsDisplay m_hImportantItemsDisplay;
 	
@@ -91,6 +93,14 @@ class PS_LobbyLoadoutPreview : SCR_WLibComponentBase
 		}
 	}
 	
+	// Reforger Lobby Conflict Edition: preview a loadout from a group palette directly from its character prefab,
+	// with no placed playable behind it. Drives the same 3D preview + weapon/ammo summary.
+	void SetPreviewLoadout(ResourceName prefabName, string displayName)
+	{
+		m_sLoadoutDisplayName = displayName;
+		SetPreviewPlayable(RplId.Invalid(), prefabName, false);
+	}
+
 	void SetPreviewPlayable(RplId playableId, ResourceName prefabName, bool openInventory)
 	{
 		if (m_hLittleInventory.GetRootWidget().IsVisible() && !openInventory)
@@ -189,6 +199,12 @@ class PS_LobbyLoadoutPreview : SCR_WLibComponentBase
 		m_WLoadoutOverlay.SetVisible(true);
 		
 		SCR_ChimeraCharacter character = SCR_ChimeraCharacter.Cast(previewManager.ResolvePreviewEntityForPrefab(m_sPrefabName));
+		if (!character)
+		{
+			m_WStateOverlay.SetVisible(false);
+			m_WLoadoutOverlay.SetVisible(false);
+			return;
+		}
 		SCR_Faction faction = SCR_Faction.Cast(character.GetFaction());
 		
 		// Extract all? items
@@ -270,10 +286,37 @@ class PS_LobbyLoadoutPreview : SCR_WLibComponentBase
 		// LODs for some reason start rave party if you to far from character. 
 		// Yes it's performance issue but then why it switch between LODs? :<
 		previewManager.SetPreviewItemFromPrefab(m_Preview.GetItemPreviewWidget(), m_sPrefabName);
-		m_wLoadoutText.SetText(playableManager.GetPlayableName(m_iPlayableId));
 		
 		// Faction data
-		m_wLoadoutBackgroundImage.SetColor(faction.GetOutlineFactionColor());
+		if (faction)
+			m_wLoadoutBackgroundImage.SetColor(faction.GetOutlineFactionColor());
+		
+		// Reforger Lobby Conflict Edition: loadout-palette preview has no placed playable behind it. Use the
+		// loadout's display name as the label and hide the per-player state overlay.
+		if (!m_iPlayableId.IsValid())
+		{
+			m_wLoadoutText.SetText(m_sLoadoutDisplayName);
+			// Reforger Lobby Conflict Edition: show the local player's name on the previewed loadout (this is the
+			// player who will deploy with it).
+			PlayerController pc = GetGame().GetPlayerController();
+			int localPlayerId = 0;
+			if (pc)
+				localPlayerId = pc.GetPlayerId();
+			string localName = "";
+			if (localPlayerId > 0)
+				localName = GetGame().GetPlayerManager().GetPlayerName(localPlayerId);
+			if (localName != "")
+			{
+				m_WStateOverlay.SetVisible(true);
+				m_wStateText.SetText(localName);
+				m_wStateBackgroundImage.SetColor(Color.FromInt(0xFF19322e));
+			}
+			else
+				m_WStateOverlay.SetVisible(false);
+			return;
+		}
+		
+		m_wLoadoutText.SetText(playableManager.GetPlayableName(m_iPlayableId));
 		
 		// Current playable player, or dead if playable already dead.
 		int playerId = playableManager.GetPlayerByPlayable(m_iPlayableId);

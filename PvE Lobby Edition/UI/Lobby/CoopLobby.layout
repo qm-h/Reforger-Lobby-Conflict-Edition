@@ -177,7 +177,7 @@ FrameWidgetClass {
                 Padding 24 28 48 0
                }
                Clipping False
-               Text "#PS-Lobby_Factions"
+               Text "Factions"
                "Font Size" 36
                "Min Font Size" 36
                "Horizontal Alignment" Center
@@ -231,8 +231,8 @@ FrameWidgetClass {
               OffsetLeft 0
               PositionY 33
               OffsetTop 33
-              SizeX 640
-              OffsetRight -640
+              SizeX 620
+              OffsetRight -620
               SizeY 95
               OffsetBottom -128
              }
@@ -244,7 +244,7 @@ FrameWidgetClass {
                 Padding 12 28 48 0
                }
                Clipping False
-               Text "#PS-Lobby_Roles"
+               Text "Faction Groups"
                "Font Size" 36
                "Min Font Size" 36
                "Horizontal Alignment" Center
@@ -259,8 +259,8 @@ FrameWidgetClass {
               OffsetLeft 0
               PositionY 139
               OffsetTop 139
-              SizeX 640
-              OffsetRight -640
+              SizeX 620.9
+              OffsetRight -620.9
               SizeY 806
               OffsetBottom -945
              }
@@ -295,6 +295,8 @@ FrameWidgetClass {
               SizeY 40
               OffsetBottom -115
              }
+             "Is Enabled" 0
+             "Is Visible" 0
              Color 0 1 0.019 0
              components {
               SCR_ButtonBaseComponent "{5EAB2394A927C221}" {
@@ -393,7 +395,7 @@ FrameWidgetClass {
                 Padding 24 28 48 0
                }
                Clipping False
-               Text "#PS-Lobby_LoadoutPreview"
+               Text "Loadout Preview"
                "Font Size" 36
                "Min Font Size" 36
                "Horizontal Alignment" Center
@@ -479,7 +481,7 @@ FrameWidgetClass {
                        {
                         TextWidgetClass "{5F190A84ED614973}" {
                          Prefab "{5F190A84ED614973}"
-                         Text "#PS-Lobby_Inventory"
+                         Text "Inventory"
                         }
                        }
                       }
@@ -673,10 +675,149 @@ FrameWidgetClass {
             }
            }
           }
+          FrameWidgetClass "{69A8F1025B80472E}" {
+           Name "SpawnColumn"
+           Slot LayoutSlot "{5D6D1414942EE2C7}" {
+           }
+           {
+            OverlayWidgetClass "{69A8F1025B80472F}" {
+             Name "SpawnHeaderOverlay"
+             Slot FrameWidgetSlot "{5D6F149C3F67950E}" {
+              Anchor 0 0 0 0
+              PositionX 0
+              OffsetLeft 0
+              PositionY 33
+              OffsetTop 33
+              SizeX 460
+              OffsetRight -460
+              SizeY 95
+              OffsetBottom -128
+             }
+             {
+              TextWidgetClass "{69A8F1025B80472D}" {
+               Name "SpawnHeader"
+               Slot OverlayWidgetSlot "{5D6F14918D6DEC39}" {
+                HorizontalAlign 0
+                Padding 12 28 48 0
+               }
+               Clipping False
+               Text "Spawn Points"
+               "Font Size" 36
+               "Min Font Size" 36
+               "Horizontal Alignment" Center
+               "Vertical Alignment" Center
+              }
+             }
+            }
+            OverlayWidgetClass "{69A8F1025B806A65}" {
+             Name "SpawnBody"
+             Slot FrameWidgetSlot "{5D6D141612AB133D}" {
+              PositionX 0
+              OffsetLeft 0
+              PositionY 139
+              OffsetTop 139
+              SizeX 460
+              OffsetRight -460
+              SizeY 806
+              OffsetBottom -945
+             }
+             {
+              ScrollLayoutWidgetClass "{69A8F1025B806A7B}" {
+               Name "SpawnScroll"
+               Slot OverlayWidgetSlot "{5D6D1B9B238445FB}" {
+                HorizontalAlign 3
+                VerticalAlign 3
+               }
+               "Inherit Color" 1
+               {
+                VerticalLayoutWidgetClass "{69A8F1025B806A78}" {
+                 Name "SpawnList"
+                 Slot AlignableSlot "{5D6D1B9B2EB684B4}" {
+                 }
+                }
+               }
+              }
+             }
+            }
+            ButtonWidgetClass "{69A8F1025B83F4D6}" {
+             Name "SpawnFoldButton"
+             Slot FrameWidgetSlot "{5EA8C93F5E685F59}" {
+              Anchor 0 0 0 0
+              PositionX 583
+              OffsetLeft 583
+              PositionY 75
+              OffsetTop 75
+              SizeX 40
+              OffsetRight -623
+              SizeY 40
+              OffsetBottom -115
+             }
+             "Is Enabled" 0
+             "Is Visible" 0
+             IsPixelPerfect 0
+             Color 0 1 0.019 0
+             components {
+              SCR_ButtonBaseComponent "{5EAB2394A927C221}" {
+               m_sSoundHovered ""
+               m_sSoundClicked ""
+               m_BackgroundDefault 1 1 1 0
+               m_BackgroundHovered 1 1 1 0.162
+               m_BackgroundSelected 1 1 1 0
+               m_BackgroundSelectedHovered 1 1 1 0.162
+               m_BackgroundClicked 1 1 1 0
+               m_bShowBorderOnFocus 0
+               m_bNoBorderAnimation 1
+              }
+             }
+             "no focus" 1
+             {
+              FrameWidgetClass "{69A8F1025B83F4D7}" {
+               Name "SpawnFoldButtonFrame"
+               Slot ButtonWidgetSlot "{5EA8C93CB4241314}" {
+               }
+               {
+                ImageWidgetClass "{69A8F1025B835B4F}" {
+                 Name "Background"
+                 Slot FrameWidgetSlot "{5D6E8206B132EE77}" {
+                  PositionX 0
+                  OffsetLeft 0
+                  PositionY 0
+                  OffsetTop 0
+                  SizeX 40
+                  OffsetRight -40
+                  SizeY 40
+                  OffsetBottom -40
+                 }
+                 Color 1 1 1 0
+                }
+                ImageWidgetClass "{69A8F1025B835B48}" {
+                 Name "SpawnFoldButtonImage"
+                 Slot FrameWidgetSlot "{5EA8C93CB43A445D}" {
+                  PositionX 0
+                  OffsetLeft 0
+                  PositionY 0
+                  OffsetTop 0
+                  SizeX 40
+                  OffsetRight -40
+                  SizeY 40
+                  OffsetBottom -40
+                 }
+                 Texture "{F3A9B47F55BE8D2B}UI/Textures/Icons/PS_Atlas_x64.imageset"
+                 Image "Fold"
+                 Size 64 64
+                }
+               }
+              }
+             }
+            }
+           }
+          }
           FrameWidgetClass "{5D6D1415C09A4316}" {
            Name "Players"
            Slot LayoutSlot "{5D6D1414942EE2C7}" {
            }
+           "Is Enabled" 0
+           "Is Visible" 0
            {
             ImageWidgetClass "{5D6E8203E04D2031}" {
              Name "Background"
@@ -1145,6 +1286,17 @@ FrameWidgetClass {
                m_sLabel "#PS-Lobby_OpenMenu"
               }
              }
+             {
+              HorizontalLayoutWidgetClass "{5DB89B776AA9CEFF}" {
+               Prefab "{5DB89B776AA9CEFF}"
+               {
+                RichTextWidgetClass "{5DB89B776317E2A7}" {
+                 Prefab "{5DB89B776317E2A7}"
+                 "Is Visible" 0
+                }
+               }
+              }
+             }
             }
             ButtonWidgetClass "{5D6F149B20ED2B47}" : "{08CF3B69CB1ACBC4}UI/layouts/WidgetLibrary/Buttons/WLib_NavigationButton.layout" {
              Name "NavigationChat"
@@ -1153,6 +1305,7 @@ FrameWidgetClass {
               VerticalAlign 3
               Padding 15 15 15 15
              }
+             "Is Visible" 0
              components {
               SCR_InputButtonComponent "{5D346C3DD81D95CD}" {
                m_sActionName "ChatToggle"
@@ -1167,6 +1320,7 @@ FrameWidgetClass {
               VerticalAlign 3
               Padding 15 15 15 15
              }
+             "Is Visible" 0
              components {
               SCR_InputButtonComponent "{5D346C3DD81D95CD}" {
                m_sActionName "VONDirect"
@@ -1210,7 +1364,17 @@ FrameWidgetClass {
                m_sActionName "LobbyReady"
                m_sLabel "#PS-Lobby_Ready"
                m_bIsMouseInput 1
-               m_fHoldTimeReduction -0.2
+              }
+             }
+             {
+              HorizontalLayoutWidgetClass "{5DB89B776AA9CEFF}" {
+               Prefab "{5DB89B776AA9CEFF}"
+               {
+                RichTextWidgetClass "{5DB89B776317E2A7}" {
+                 Prefab "{5DB89B776317E2A7}"
+                 "Is Visible" 0
+                }
+               }
               }
              }
             }
@@ -1245,12 +1409,12 @@ FrameWidgetClass {
    Slot FrameWidgetSlot "{5D4881250D202DF3}" {
     PositionX 7.541
     OffsetLeft 7.541
-    PositionY 0
-    OffsetTop 0
+    PositionY -1.569
+    OffsetTop -1.569
     SizeX 1954.46
     OffsetRight -1962
     SizeY 1080
-    OffsetBottom -1080
+    OffsetBottom -1078.43
    }
    "Z Order" 50
    {
@@ -1279,10 +1443,6 @@ FrameWidgetClass {
     OffsetBottom -93
    }
    {
-    BlurWidgetClass "{60D306EB184AA7C4}" {
-     Prefab "{60D306EB184AA7C4}"
-     "Is Visible" 0
-    }
     OverlayWidgetClass "{5EB1000190412184}" {
      Prefab "{5EB1000190412184}"
      {
@@ -1291,6 +1451,8 @@ FrameWidgetClass {
        {
         ButtonWidgetClass "{5EB1000404C189E8}" {
          Prefab "{5EB1000404C189E8}"
+         "Is Enabled" 0
+         "Is Visible" 0
          {
           SizeLayoutWidgetClass "{5EB2902E629DFD43}" {
            Prefab "{5EB2902E629DFD43}"
@@ -1303,7 +1465,11 @@ FrameWidgetClass {
                {
                 TextWidgetClass "{5EB10003D5163631}" {
                  Prefab "{5EB10003D5163631}"
+                 Slot OverlayWidgetSlot "{5EB10008D4DC6DB3}" {
+                  HorizontalAlign 1
+                 }
                  Clipping False
+                 Text "Preview"
                 }
                }
               }
@@ -1315,6 +1481,8 @@ FrameWidgetClass {
         }
         ButtonWidgetClass "{5EB1000406CEA78A}" {
          Prefab "{5EB1000406CEA78A}"
+         "Is Enabled" 0
+         "Is Visible" 0
          {
           SizeLayoutWidgetClass "{5EB2902E629DFD43}" {
            Prefab "{5EB2902E629DFD43}"
@@ -1327,7 +1495,11 @@ FrameWidgetClass {
                {
                 TextWidgetClass "{5EB10003D5163631}" {
                  Prefab "{5EB10003D5163631}"
+                 Slot OverlayWidgetSlot "{5EB10008D4DC6DB3}" {
+                  HorizontalAlign 1
+                 }
                  Clipping False
+                 Text "Lobby"
                 }
                }
               }
@@ -1339,6 +1511,8 @@ FrameWidgetClass {
         }
         ButtonWidgetClass "{5EB1000406260CAA}" {
          Prefab "{5EB1000406260CAA}"
+         "Is Enabled" 0
+         "Is Visible" 0
          {
           SizeLayoutWidgetClass "{5EB2902E629DFD43}" {
            Prefab "{5EB2902E629DFD43}"
@@ -1351,7 +1525,11 @@ FrameWidgetClass {
                {
                 TextWidgetClass "{5EB10003D5163631}" {
                  Prefab "{5EB10003D5163631}"
+                 Slot OverlayWidgetSlot "{5EB10008D4DC6DB3}" {
+                  HorizontalAlign 1
+                 }
                  Clipping False
+                 Text "Briefing"
                 }
                }
               }
@@ -1363,6 +1541,8 @@ FrameWidgetClass {
         }
         ButtonWidgetClass "{5EB10004061DFD92}" {
          Prefab "{5EB10004061DFD92}"
+         "Is Enabled" 0
+         "Is Visible" 0
          {
           SizeLayoutWidgetClass "{5EB2902E629DFD43}" {
            Prefab "{5EB2902E629DFD43}"
@@ -1409,7 +1589,86 @@ FrameWidgetClass {
           }
          }
         }
+        ButtonWidgetClass "{5EB290EEBC6EAD9B}" {
+         Prefab "{5EB290EEBC6EAD9B}"
+         Slot LayoutSlot "{5EB2902EAC0B9AA0}" {
+          HorizontalAlign 1
+          VerticalAlign 1
+         }
+         "Is Visible" 0
+         {
+          SizeLayoutWidgetClass "{5EB2902E629DFD43}" {
+           Prefab "{5EB2902E629DFD43}"
+           {
+            FrameWidgetClass "{5EB100017BC764F4}" {
+             Prefab "{5EB100017BC764F4}"
+             Slot AlignableSlot "{5EB1000108B829FA}" {
+             }
+             "Ignore Cursor" 0
+             {
+              OverlayWidgetClass "{5EB1000388A8E58A}" {
+               Prefab "{5EB1000388A8E58A}"
+               Slot FrameWidgetSlot "{5EB1000388A8E5FE}" {
+                OffsetLeft 0
+                OffsetTop 0
+                SizeX 254.6
+                OffsetRight -254.6
+                OffsetBottom -39
+                SizeToContent 1
+               }
+               {
+                TextWidgetClass "{5EB10003D5163631}" {
+                 Prefab "{5EB10003D5163631}"
+                 Slot OverlayWidgetSlot "{5EB10008D4DC6DB3}" {
+                  HorizontalAlign 1
+                 }
+                 Text "Play"
+                }
+               }
+              }
+              ImageWidgetClass "{5EB290426C4BD466}" {
+               Prefab "{5EB290426C4BD466}"
+               Slot FrameWidgetSlot "{5EA8C93CB43A445D}" {
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
        }
+      }
+     }
+    }
+    HorizontalLayoutWidgetClass "{60D306E9998FFF05}" {
+     Prefab "{60D306E9998FFF05}"
+     Slot FrameWidgetSlot "{60D306E76883E94A}" {
+      PositionX 700
+      OffsetLeft 700
+      OffsetTop -70
+      SizeX 150
+      OffsetRight -850
+      OffsetBottom 9
+     }
+     {
+      TextWidgetClass "{69A965B44E081FF4}" {
+       Name "Text0"
+       Slot LayoutSlot "{69A965B532DB7CA3}" {
+        HorizontalAlign 1
+        VerticalAlign 1
+        Padding 10 0 0 0
+       }
+       "Is Enabled" 0
+       "Is Visible" 0
+       Text "Mission author"
+       "Font Size" 28
+       "Min Font Size" 28
+      }
+      RichTextWidgetClass "{60D306E9B981BC2A}" {
+       Prefab "{60D306E9B981BC2A}"
+       "Is Visible" 0
+       Text "<color rgba='226,167,79,255'>#PS-GameModeHeader_Author:</color> onyzuK"
       }
      }
     }
@@ -1428,6 +1687,8 @@ FrameWidgetClass {
     SizeY 800
     OffsetBottom -423
    }
+   "Is Enabled" 0
+   "Is Visible" 0
    {
     BlurWidgetClass "{60DB2B5B1B885EF3}" {
      Prefab "{60DB2B5B1B885EF3}"

@@ -180,11 +180,11 @@ VerticalLayoutWidgetClass {
       TextWidgetClass "{5D6D1B9AE656F765}" {
        Name "RolesGroupName"
        Slot FrameWidgetSlot "{5D6D1B9AA160592D}" {
-        PositionX 12
-        OffsetLeft 12
+        PositionX 84
+        OffsetLeft 84
         PositionY 0
         OffsetTop 0
-        SizeX 595
+        SizeX 523
         OffsetRight -607
         SizeY 48
         OffsetBottom -48
@@ -201,11 +201,11 @@ VerticalLayoutWidgetClass {
       RichTextWidgetClass "{6461464FFE7C132D}" {
        Name "RolesGroupNameCustom"
        Slot FrameWidgetSlot "{5D6D1B9AA160592D}" {
-        PositionX 12
-        OffsetLeft 12
+        PositionX 84
+        OffsetLeft 84
         PositionY 44
         OffsetTop 44
-        SizeX 591
+        SizeX 519
         OffsetRight -603
         SizeY 40
         OffsetBottom -84
@@ -232,6 +232,20 @@ VerticalLayoutWidgetClass {
         OffsetBottom -84
        }
        Color 0.502 0 0 1
+      }
+      ImageWidgetClass "{5EA716101FDA2F01}" {
+       Name "GroupFlagImage"
+       Slot FrameWidgetSlot "{5EA716101FDA2F02}" {
+        PositionX 12
+        OffsetLeft 12
+        PositionY 10
+        OffsetTop 10
+        SizeX 64
+        OffsetRight -76
+        SizeY 64
+        OffsetBottom -74
+       }
+       Size 64 64
       }
       HorizontalLayoutWidgetClass "{64614672F7F41B99}" {
        Name "MembersHorizontalLayout"

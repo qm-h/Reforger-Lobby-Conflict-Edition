@@ -38,11 +38,18 @@ class PS_WaitScreen: MenuBase
 				SCR_VoNComponent WBVoN = SCR_VoNComponent.Cast(WBCharacter.FindComponent(SCR_VoNComponent));
 				if (WBVoN)
 				{
+					// Reforger Lobby Conflict Edition: the locally controlled entity in the lobby is the InitialPlayer
+					// camera, which has a VoN component but NO PS_PlayableComponent. Guard against it
+					// (calling SetPlayable on null crashed with "NULL pointer to instance"). Only the
+					// editor auto-possess path for an actual playable character should run here.
 					PS_PlayableComponent WBPlayableComponent = PS_PlayableComponent.Cast(WBCharacter.FindComponent(PS_PlayableComponent));
-					WBPlayableComponent.SetPlayable(true);
 					RplComponent rplComponent = RplComponent.Cast(WBCharacter.FindComponent(RplComponent));
-					PS_PlayableManager.GetInstance().SetPlayerPlayable(SCR_PlayerController.GetLocalPlayerId(), rplComponent.Id());
-					gameMode.StartGameMode();
+					if (WBPlayableComponent && rplComponent)
+					{
+						WBPlayableComponent.SetPlayable(true);
+						PS_PlayableManager.GetInstance().SetPlayerPlayable(SCR_PlayerController.GetLocalPlayerId(), rplComponent.Id());
+						gameMode.StartGameMode();
+					}
 				}
 			}
 		}
@@ -102,6 +109,7 @@ class PS_WaitScreen: MenuBase
 		m_bWaitEnded = true;
 		Close();
 		
+		Print("[PVE UI] WaitScreen ended, switching to menu for state=" + gameMode.GetState() + " (playerId=" + playerController.GetPlayerId() + ")", LogLevel.NORMAL);
 		PS_PlayableControllerComponent playableController = PS_PlayableControllerComponent.Cast(playerController.FindComponent(PS_PlayableControllerComponent));
 		playableController.SetPlayerState(playerController.GetPlayerId(), PS_EPlayableControllerState.NotReady);
 		playableController.MoveToVoNRoomByKey(playerController.GetPlayerId(), roomKey);

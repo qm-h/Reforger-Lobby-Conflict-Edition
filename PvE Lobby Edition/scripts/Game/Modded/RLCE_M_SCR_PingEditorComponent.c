@@ -22,18 +22,8 @@ modded class SCR_PingEditorComponent
 	
 	override void SendPing(bool unlimitedOnly = false, vector position = vector.Zero, SCR_EditableEntityComponent target = null)
 	{
-		SCR_EditorManagerEntity manager = GetManager();
-		if (!manager) 
-			return;
-		if (!manager.IsOpened())
-		{
-			PS_PingMessageMenu pingMenu = PS_PingMessageMenu.Cast(GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.PingMessageMenu));
-			ScriptInvoker invoker = new ScriptInvoker();
-			invoker.Insert(PS_SendPing_Custom);
-			pingMenu.SetPingData(invoker, unlimitedOnly, position, target);
-		}
-		else
-			PS_SendPing_Custom(unlimitedOnly, position, target, "");
+		// Reforger Lobby Conflict Edition: ping (et sa popup de message) désactivé dans le lobby de déploiement.
+		return;
 	}
 	
 	void PS_SendPing_Custom(bool unlimitedOnly = false, vector position = vector.Zero, SCR_EditableEntityComponent target = null, string customText = "")

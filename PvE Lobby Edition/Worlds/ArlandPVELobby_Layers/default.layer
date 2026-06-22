@@ -1,0 +1,498 @@
+SCR_AIWorld SCR_AIWorld : "{E0A05C76552E7F58}Prefabs/AI/SCR_AIWorld.et" {
+ coords 1891.659 11.576 1823.161
+ {
+  CommentEntity {
+   coords 0 1 0
+   m_Comment "SCR_AIWorld: "\
+   "Configure navigation mesh"
+   m_Color 0 0 0
+   m_FaceCamera 1
+   m_TextBackground 1
+   m_BackgroundColor 1 0.6 0
+   m_BackgroundTransparency 0
+  }
+ }
+}
+PerceptionManager PerceptionManager : "{028DAEAD63E056BE}Prefabs/World/Game/PerceptionManager.et" {
+ coords 1891.659 11.438 1822.161
+}
+PS_GameModeCoop PS_GameMode_Lobby1 : "{9C2001FE7A2F2281}Prefabs/MP/Modes/PS_GameMode_Lobby.et" {
+ components {
+  SCR_GroupsManagerComponent "{5706EC99934496F5}" {
+   m_sDefaultGroupPrefab "{000CD338713F2B5A}Prefabs/AI/Groups/Group_Base.et"
+  }
+ }
+ coords 1892.234 12.134 1828.282
+ m_bTeamSwitch 1
+ m_iFreezeTime 0
+ m_bDisableChat 1
+}
+SCR_CampaignFactionManager CampaignFactionManager : "{F1AC26310BAE3788}Prefabs/MP/Campaign/CampaignFactionManager.et" {
+ coords 1891.659 11.714 1824.161
+ Factions {
+  SCR_CampaignFaction "{50B30C3AF4BFD934}" {
+   m_bIsPlayable 0
+  }
+  SCR_CampaignFaction "{50B30C3ADB052C80}" : "{ED6C86F0AC9CBE60}Configs/Factions/O_US_Campaign.conf" {
+   m_CallsignInfo SCR_FactionCallsignInfo "{5DA0F2A6677ADA9E}" {
+    m_bAssignCallsignBasedOnGroupRole 1
+    m_iCompanyOverflowIndex 8
+   }
+   m_aGroupRolePresetConfigs {
+    SCR_GroupRolePresetConfig "{69A8D77181C6C185}" {
+     m_sGroupName "Baker"
+     m_eGroupRole ASSAULT
+     m_sGroupFlagName "infantry"
+     m_sGroupDescription "Baker Group"
+     m_iGroupSize 6
+     m_sGroupRoleName "GNAGNAGNASDQSDQSDSQD"
+     m_aLoadoutResources {
+      "{F6836BCA03008E4B}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Scout_RTO_P.et"
+      "{DBC177C261C93B9D}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_SL_P.et"
+      "{547BA14003A67C04}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Medic_P.et"
+     }
+    }
+   }
+   m_aEntityCatalogs {
+    SCR_EntityCatalogMultiList "{5C68A0EE815FA292}" {
+     m_aEntityEntryList {
+      SCR_EntityCatalogEntry "{6116BA741CF3C099}" {
+       m_aEntityDataList {
+        SCR_EntityCatalogLoadoutData "{6302DC7BF151B585}" {
+         m_fSpawnSupplyCost 20
+        }
+       }
+      }
+      SCR_EntityCatalogEntry "{5C54C23BDBF9A97E}" {
+       m_aEntityDataList {
+        SCR_EntityCatalogLoadoutData "{62FAF96E5778D9D3}" {
+        }
+       }
+      }
+      SCR_EntityCatalogEntry "{62BEF704856C6514}" {
+       m_aEntityDataList {
+        SCR_EntityCatalogLoadoutData "{6498C617CBE1E44B}" {
+        }
+       }
+      }
+      SCR_EntityCatalogEntry "{5C54C23BDB8243F5}" {
+       m_aEntityDataList {
+        SCR_EntityCatalogLoadoutData "{62FAF96F9F0F81BD}" {
+        }
+       }
+      }
+     }
+    }
+    SCR_EntityCatalogMultiList "{5C9E82F29B327997}" {
+     m_aMultiLists {
+      SCR_EntityCatalogMultiListEntry "{60569780DE4EE17A}" {
+       m_aEntities {
+        SCR_EntityCatalogEntry "{5D23482664F150D9}" {
+         m_aEntityDataList {
+          SCR_EntityCatalogEditorData "{6052BB10DE50FA41}" {
+           m_eValidEditorModes EDIT
+          }
+         }
+        }
+        SCR_EntityCatalogEntry "{6064E51C196084B2}" {
+         m_sEntityPrefab "{9CB496688A3BCC3E}Prefabs/MP/Campaign/Assets/CampaignMobileAssemblyWest.et"
+         m_aEntityDataList {
+          SCR_EntityCatalogEditorData "{6064E51C31106C57}" {
+           m_eValidEditorModes 33
+          }
+          SCR_EntityCatalogSpawnerData "{6064E51C30E92A0B}" {
+           m_eSlotTypes VEHICLE_MEDIUM
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+    SCR_EntityCatalogMultiList "{5C68A0EEB3F124F9}" {
+     m_aMultiLists {
+      SCR_EntityCatalogMultiListEntry "{5C68AD59AA6FA1B8}" {
+       m_aEntities {
+        SCR_EntityCatalogInventoryItem "{5C62F7D8EBC8251B}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7D848E8A152}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5C62F7D8E8E0BB47}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7D8715AC76A}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5C62F7D816ADEECB}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7D87BE255BC}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5C62F7D813556BD9}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7D8641686D9}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615C8771AF5329F3}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{615C87719BA90BE5}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615C877191E9B5F0}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{615C8771FC1C6053}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615C8771926ED950}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{615C8771E9B1CE4F}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62D8F15317B6FD3C}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62D8F15350F0068E}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62D8F1530A6419E6}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62D8F150BBDC5D4F}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62D8F1530C9356E4}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62D8F150AD980E9F}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62D8F1530D8D9237}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62D8F15088AC49EB}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62D8F1530EC09F1C}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62D8F150F8E3D90E}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5CB8994A0996F564}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5CB8994A7347CD36}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5C62F7D81EA1A633}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7DF96C89A81}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5C62F7D81D0E5581}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7DF94CA2FF2}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5CB899478684136C}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5CB899468928129D}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5CB89946F93DA322}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5CB89946D3E242B5}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5CB89946C0314ED7}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5CB89946CC23827A}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{61A481A39AC9DB21}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61A481A3F000EB14}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+       }
+      }
+      SCR_EntityCatalogMultiListEntry "{5CA0A9E60B892D2A}" {
+       m_aEntities {
+        SCR_EntityCatalogInventoryItem "{5CA0A9E6C9E91F72}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5CA0A9E6C9E91F70}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{658A8B1DB31EA629}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{658A8B1DB31EBEE4}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615CB540804A3CAB}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{60AAE47ADF734B45}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615CBA01E6EA6FBB}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{60AAE47ADF734B45}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615CBA01F3FE2E11}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{60AAE47ADF734B45}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{615CBA01F48CDB31}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{60AAE47ADF734B45}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+       }
+      }
+      SCR_EntityCatalogMultiListEntry "{5C68AD59F0753ABE}" {
+       m_aEntities {
+        SCR_EntityCatalogInventoryItem "{5C62F7D8CABBF612}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5C62F7D804202944}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{5E0304F3B82F416B}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{5E0304F3DD6D9806}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{61B0B87C2165ED5E}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61B0B87C2165ED22}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+       }
+      }
+      SCR_EntityCatalogMultiListEntry "{61B2A3760BDE41B0}" {
+       m_aEntities {
+        SCR_EntityCatalogInventoryItem "{61B2A3760ED65DBC}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61B2A3763291B06B}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{61B4AA57E8494190}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61B2A3763291B06B}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{61B4AA57ECD4520A}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61B2A3763291B06B}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{61E4E8132A458548}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61E4EA2385634B26}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{61E4E813294F6C60}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61E4EA238B1F4658}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62E49625AC9D0374}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62E49625BA68F5B5}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{62E49626B37E44CB}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{62E49625BA68F5B5}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+       }
+      }
+      SCR_EntityCatalogMultiListEntry "{6556A2FE10697152}" {
+       m_aEntities {
+        SCR_EntityCatalogInventoryItem "{6556A2FFC2BC7500}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{61ECC6DC8DB987BC}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{6556A2FFDA3E53E5}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{6556A2FFDA3E5050}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{6556A2FFC51E2722}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{6556A2FFC51E27EA}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{6556A2FFC438824C}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{6556A2FFC43882D0}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{6556A2FFD34470D2}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{6556A2FFD34470B0}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+        SCR_EntityCatalogInventoryItem "{6556B93806ADFA5D}" {
+         m_aEntityDataList {
+          SCR_ArsenalItem "{6556B93806ADFA2E}" {
+           m_bUseMilitarySupplyAllocation 0
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+   m_sFactionBackground "{F8AC305446D5D480}UI/Textures/DeployMenu/Loadout-BG/Loadout_US_BG.imageset"
+   m_aStartingVehicles {
+    "{A3786C5C8687F004}Prefabs/Vehicles/Wheeled/M923A1/M923A1_transport_MERDC_filled.et"
+    "{A3786C5C8687F004}Prefabs/Vehicles/Wheeled/M923A1/M923A1_transport_MERDC_filled.et"
+    "{2013579FE0B109F3}Prefabs/Vehicles/Wheeled/M923A1/M923A1_engineer_MERDC_filled.et"
+    "{A6AD5417A030CC67}Prefabs/Vehicles/Wheeled/Conflict_Variants/LAV25_MERDC_Conflict.et"
+    "{86D830868F026D54}Prefabs/Vehicles/Wheeled/M151A2/M151A2_MERDC.et"
+   }
+  }
+  SCR_CampaignFaction "{56F0C3A6336375DC}" {
+   m_bIsPlayable 0
+   m_eShowInWelcomeScreenOverride NONE
+  }
+  SCR_Faction "{60DCF47AEF40BD72}" : "{3FA20B01D950D31F}Configs/Factions/CIV.conf" {
+  }
+  SCR_CampaignFaction "{68F2E5C05A1440DC}" {
+   m_bIsPlayable 0
+  }
+ }
+ {
+  CommentEntity {
+   coords 0 1 0
+   m_Comment "CampaignFactionManager: "\
+   "Make sure one faction is non-playable to use for Independent units."
+   m_Color 0 0 0
+   m_FaceCamera 1
+   m_TextBackground 1
+   m_BackgroundColor 1 0.6 0
+   m_BackgroundTransparency 0
+  }
+ }
+}
+GenericEntity ConflictMilitaryBase : "{1391CE8C0E255636}Prefabs/Systems/MilitaryBase/ConflictMilitaryBase.et" {
+ coords 1891.659 12.065 1827.161
+ {
+  CommentEntity {
+   coords 0 1 0
+   m_Comment "ConflictMilitaryBase: "\
+   "At least two bases need \"Can be HQ\" param checked. Place bases and control points wherever you wish."
+   m_Color 0 0 0
+   m_FaceCamera 1
+   m_TextBackground 1
+   m_BackgroundColor 1 0.6 0
+   m_BackgroundTransparency 0
+  }
+ }
+}
+PS_MissionDescription : "{3136BE42592F3B1B}PrefabsEditable/MissionDescription/EditableMissionDescription.et" {
+ coords 1802.955 19.21 1836.675
+}
+SCR_LoadoutManager : "{83AF34DE947B8D59}Prefabs/MP/Campaign/O_CampaignLoadoutManager.et" {
+ coords 1891.58 11.938 1825.887
+}
+$grp SCR_PlayerSpawnPoint : "{F6CAD21EDD2D1964}Prefabs/MP/Spawning/PlayerSpawnPoint.et" {
+ {
+  components {
+   SCR_MapDescriptorComponent "{56442C076054B2E5}" {
+    DisplayName "TEST2"
+   }
+  }
+  coords 1800.822 19.046 1838.302
+  m_sFaction "US"
+  m_sPS_LobbyDisplayName "Spawn Baker"
+ }
+ {
+  components {
+   SCR_MapDescriptorComponent "{56442C076054B2E5}" {
+    DisplayName "TEST"
+   }
+  }
+  coords 1463.15 34.828 1153.474
+  m_sFaction "US"
+  m_sPS_LobbyDisplayName "Spawn Charlie"
+ }
+}

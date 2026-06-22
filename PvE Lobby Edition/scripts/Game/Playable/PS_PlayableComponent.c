@@ -16,6 +16,13 @@ class PS_PlayableComponent : ScriptComponent
 	// Actually just RplId from RplComponent
 	protected RplId m_RplId;
 	protected vector spawnTransform[4];
+
+	// Reforger Lobby Conflict Edition: when a player deploys from the lobby into a chosen group, RequestDeploy stamps
+	// that group's id here (server only). RegisterPlayable reads it so the deployed player is bound to
+	// the named deployment group instead of a fresh auto-created one. 0 = none (AI / legacy spawn).
+	protected int m_iPS_DeployGroupID = 0;
+	void PS_SetDeployGroupID(int groupID) { m_iPS_DeployGroupID = groupID; }
+	int PS_GetDeployGroupID() { return m_iPS_DeployGroupID; }
 	[RplProp()]
 	int m_iRespawnCounter = 0;
 	protected bool m_bRespawned;
@@ -206,6 +213,38 @@ class PS_PlayableComponent : ScriptComponent
 		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
 		if (!playableManager)
 			return;
+
+		// Reforger Lobby Conflict Edition (PROJECT.md #4): if this playable is removed while a player still occupies it
+		// through a path the damage-death pipeline never sees (body deleted via Game Master, slot turned
+		// non-playable, etc.), the player would otherwise be stranded on an editor/respawn screen. Send
+		// them back to the deployment lobby. m_bRespawned guards against double-handling when the normal
+		// OnDamageStateChange(DESTROYED) -> TryRespawn path already fired for this body. We defer the call
+		// onto the (persistent) game mode rather than this component, which is mid-destruction here.
+		if (Replication.IsServer() && !m_bRespawned)
+		{
+			int occupant = playableManager.GetPlayerByPlayable(m_RplId);
+			if (occupant > 0)
+			{
+				m_bRespawned = true;
+				PS_GameModeCoop gameMode = PS_GameModeCoop.Cast(GetGame().GetGameMode());
+				if (gameMode && gameMode.IsPlayerInGameMaster(occupant))
+				{
+					// A Game Master deleting their own character must NOT be auto-dropped to the lobby;
+					// keep them in the editor. But undeploy them so they count as having no character:
+					// clear the playable assignment IMMEDIATELY (so GetPlayableByPlayer is Invalid right
+					// away and EditorClosed -> SwitchToMenu(GAME) opens the lobby instead of re-possessing
+					// the deleted body) and park them on the lobby camera on the next tick (deferred:
+					// we're mid entity-destruction here).
+					playableManager.SetPlayerPlayable(occupant, RplId.Invalid());
+					GetGame().GetCallqueue().CallLater(gameMode.PrepareGameMasterReturnToLobby, 200, false, occupant);
+				}
+				else if (gameMode)
+				{
+					GetGame().GetCallqueue().CallLater(gameMode.ReturnPlayerToLobby, 200, false, occupant);
+				}
+			}
+		}
+
 		playableManager.UnRegisterPlayable(GetRplId());
 	}
 

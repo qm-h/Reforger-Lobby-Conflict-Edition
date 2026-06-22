@@ -41,6 +41,10 @@ class PS_MissionDataManager : ScriptComponent
 	void RegisterVehicle(Vehicle vehicle)
 	{
 		RplComponent rplComponent = RplComponent.Cast(vehicle.FindComponent(RplComponent));
+		// Reforger Lobby Conflict Edition: some vehicles on custom worlds have no RplComponent. Without this guard
+		// rplComponent.Id() throws a NULL pointer exception every frame and starves the lobby init.
+		if (!rplComponent)
+			return;
 		SCR_EditableVehicleComponent editableVehicleComponent = SCR_EditableVehicleComponent.Cast(vehicle.FindComponent(SCR_EditableVehicleComponent));
 		FactionAffiliationComponent factionAffiliationComponent = FactionAffiliationComponent.Cast(vehicle.FindComponent(FactionAffiliationComponent));
 		SCR_DamageManagerComponent damageManagerComponent = SCR_DamageManagerComponent.Cast(vehicle.FindComponent(SCR_DamageManagerComponent));

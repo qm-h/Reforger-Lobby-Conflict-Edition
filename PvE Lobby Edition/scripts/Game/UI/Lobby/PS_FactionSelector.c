@@ -15,6 +15,7 @@ class PS_FactionSelector : SCR_ButtonBaseComponent
 	protected int m_iCount;
 	protected int m_iMaxCount;
 	protected int m_iLockedCount;
+	protected bool m_bUnlimited; // faction has at least one unlimited-capacity group (Group Size 0)
 	protected SCR_Faction m_faction;
 	protected PS_CoopLobby m_CoopLobby;
 	
@@ -81,6 +82,12 @@ class PS_FactionSelector : SCR_ButtonBaseComponent
 	{
 		m_CoopLobby = coopLobby;
 	}
+
+	void SetUnlimited(bool unlimited)
+	{
+		m_bUnlimited = unlimited;
+		UpdateCounter();
+	}
 	
 	int GetCount()
 	{
@@ -99,6 +106,11 @@ class PS_FactionSelector : SCR_ButtonBaseComponent
 	
 	void UpdateCounter()
 	{
+		if (m_bUnlimited)
+		{
+			m_wFactionCounter.SetText(m_iCount.ToString());
+			return;
+		}
 		if (m_iMaxCount - m_iLockedCount == 0)
 		{
 			m_wFactionCounter.SetText("#PS_Lobby_Locked");

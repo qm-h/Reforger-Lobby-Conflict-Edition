@@ -29,6 +29,7 @@ class PS_RolesGroup : SCR_ScriptedWidgetComponent
 	protected TextWidget m_wRolesGroupName;
 	protected TextWidget m_wRolesGroupNameCustom;
 	protected ImageWidget m_wGroupFactionColor;
+	protected ImageWidget m_wGroupFlagImage;
 	protected VerticalLayoutWidget m_wList;
 	protected ButtonWidget m_wRolesGroupButton;
 	protected HorizontalLayoutWidget m_wMembersHorizontalLayout;
@@ -49,6 +50,17 @@ class PS_RolesGroup : SCR_ScriptedWidgetComponent
 	protected int m_iCharactersCount;
 	protected int m_iLockedCount;
 	protected int m_iPlayersCount;
+
+	// Reforger Lobby Conflict Edition deploy mode: this widget represents a generated group (capacity + loadout palette).
+	protected bool m_bDeployMode;
+	protected int m_iGroupID;
+	protected int m_iCapacity;
+	protected string m_sGroupDisplayName;
+	protected string m_sGroupDescription;
+	protected SCR_Faction m_DeployFaction;
+	// Reforger Lobby Conflict Edition: this widget is a spawn-point section (buttons = world spawn points).
+	protected bool m_bSpawnSection;
+	ref array<PS_CharacterSelector> m_aLoadoutSelectors = {};
 	
 	ref map<PS_PlayableContainer, PS_CharacterSelector> m_mCharacters = new map<PS_PlayableContainer, PS_CharacterSelector>();
 	ref map<ResourceName, PS_MembersCounter> m_mMembers = new map<ResourceName, PS_MembersCounter>();
@@ -80,6 +92,10 @@ class PS_RolesGroup : SCR_ScriptedWidgetComponent
 		m_wRolesGroupName = TextWidget.Cast(w.FindAnyWidget("RolesGroupName"));
 		m_wRolesGroupNameCustom = TextWidget.Cast(w.FindAnyWidget("RolesGroupNameCustom"));
 		m_wGroupFactionColor = ImageWidget.Cast(w.FindAnyWidget("GroupFactionColor"));
+		m_wGroupFlagImage = ImageWidget.Cast(w.FindAnyWidget("GroupFlagImage"));
+		// Hidden by default; shown only when a group preset provides a flag (see SetDeploymentGroup).
+		if (m_wGroupFlagImage)
+			m_wGroupFlagImage.SetVisible(false);
 		m_wList = VerticalLayoutWidget.Cast(w.FindAnyWidget("List"));
 		m_wRolesGroupButton = ButtonWidget.Cast(w.FindAnyWidget("RolesGroupButton"));
 		m_wMembersHorizontalLayout = HorizontalLayoutWidget	.Cast(w.FindAnyWidget("MembersHorizontalLayout"));
@@ -113,6 +129,123 @@ class PS_RolesGroup : SCR_ScriptedWidgetComponent
 		m_wGroupFactionColor.SetColor(faction.GetFactionColor());
 	}
 	
+	// --------------------------------------------------------------------------------------------------------------------------------
+	// Reforger Lobby Conflict Edition deploy mode
+	// Built purely from the authored preset + faction (no live SCR_AIGroup entity needed,
+	// avoids any dependency on group-entity replication timing in the lobby).
+	void SetDeploymentGroup(int groupID, SCR_Faction faction, int capacity, string groupName, string description, ResourceName groupFlag)
+	{
+		m_bDeployMode = true;
+		m_iGroupID = groupID;
+		m_iCapacity = capacity;
+		m_sGroupDisplayName = groupName;
+		m_sGroupDescription = description;
+		m_DeployFaction = faction;
+		if (faction)
+		{
+			m_sFactionKey = faction.GetFactionKey();
+			m_wGroupFactionColor.SetColor(faction.GetFactionColor());
+		}
+		m_wRolesGroupName.SetText(groupName);
+		// Reforger Lobby Conflict Edition: show the authored group flag patch next to the name when present.
+		if (m_wGroupFlagImage)
+		{
+			if (!groupFlag.IsEmpty())
+			{
+				m_wGroupFlagImage.LoadImageTexture(0, groupFlag);
+				m_wGroupFlagImage.SetVisible(true);
+			}
+			else
+				m_wGroupFlagImage.SetVisible(false);
+		}
+		UpdateDeployCounter();
+	}
+
+	int GetGroupID()
+	{
+		return m_iGroupID;
+	}
+
+	SCR_Faction GetDeployFaction()
+	{
+		return m_DeployFaction;
+	}
+
+	bool IsSpawnSection()
+	{
+		return m_bSpawnSection;
+	}
+
+	// Reforger Lobby Conflict Edition: header-only section listing the faction's world spawn points.
+	void SetSpawnSection(SCR_Faction faction, string title)
+	{
+		m_bDeployMode = true;
+		m_bSpawnSection = true;
+		m_DeployFaction = faction;
+		if (faction)
+		{
+			m_sFactionKey = faction.GetFactionKey();
+			m_wGroupFactionColor.SetColor(faction.GetFactionColor());
+		}
+		m_wRolesGroupName.SetText(title);
+		m_wRolesGroupNameCustom.SetText("");
+		// The dedicated Spawn Points column has its own header, so hide this row's foldable
+		// header rectangle (the empty open/close button above the spawn list).
+		if (m_wRolesGroupButton)
+			m_wRolesGroupButton.SetVisible(false);
+	}
+
+	void InsertLoadout(int groupID, ResourceName loadoutResource, SCR_Faction faction, string displayName, ResourceName iconResource)
+	{
+		Widget characterSelectorRoot = m_wWorkspaceWidget.CreateWidgets(m_sCharacterSelectorPrefab, m_wCharactersList);
+		PS_CharacterSelector characterSelector = PS_CharacterSelector.Cast(characterSelectorRoot.FindHandler(PS_CharacterSelector));
+		characterSelector.SetLobbyMenu(m_CoopLobby);
+		characterSelector.SetRolesGroup(this);
+		characterSelector.SetLoadout(groupID, loadoutResource, faction, displayName, iconResource);
+		m_aLoadoutSelectors.Insert(characterSelector);
+	}
+
+	void InsertSpawnPoint(RplId spawnRplId, SCR_Faction faction, string displayName)
+	{
+		Widget characterSelectorRoot = m_wWorkspaceWidget.CreateWidgets(m_sCharacterSelectorPrefab, m_wCharactersList);
+		PS_CharacterSelector characterSelector = PS_CharacterSelector.Cast(characterSelectorRoot.FindHandler(PS_CharacterSelector));
+		characterSelector.SetLobbyMenu(m_CoopLobby);
+		characterSelector.SetRolesGroup(this);
+		characterSelector.SetSpawnPoint(spawnRplId, faction, displayName);
+		m_aLoadoutSelectors.Insert(characterSelector);
+	}
+
+	// Reforger Lobby Conflict Edition: refresh the selected-highlight of all loadout/spawn buttons in this row,
+	// and the group occupancy counter "(x/y)" (players who currently have this group selected).
+	void RefreshDeploySelection()
+	{
+		UpdateDeployCounter();
+		foreach (PS_CharacterSelector selector : m_aLoadoutSelectors)
+		{
+			if (selector)
+				selector.RefreshDeploySelection();
+		}
+	}
+
+	void UpdateDeployCounter()
+	{
+		if (m_bSpawnSection)
+			return;
+		int selected = m_PlayableManager.GetGroupSelectedCount(m_iGroupID);
+		string counter;
+		if (m_iCapacity <= 0) // Group Size 0 = unlimited
+			counter = "(" + selected + ")";
+		else
+			counter = "(" + selected + "/" + m_iCapacity + ")";
+		// Second line under the group name shows the authored group description + occupancy.
+		string line = m_sGroupDescription;
+		if (line != "")
+			line = line + " " + counter;
+		else
+			line = counter;
+		m_wRolesGroupNameCustom.SetText(line);
+	}
+
 	// --------------------------------------------------------------------------------------------------------------------------------
 	void UpdateCustomName()
 	{

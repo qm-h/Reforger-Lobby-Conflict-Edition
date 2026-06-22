@@ -54,6 +54,27 @@ class PS_PlayableManager : ScriptComponent
 	ref map<RplId, string> m_mPlayablePrefabs = new map<RplId, string>();
 	ref map<RplId, string> m_mPlayableNames = new map<RplId, string>();
 
+	// --- Reforger Lobby Conflict Edition deployment (Strategy B) ---
+	// Generated playable groups: groupID -> faction + index into faction.GetGroupRolePresetConfigs().
+	// Replicated to clients so the lobby can pair a live group with its authored preset.
+	ref map<int, FactionKey> m_mGroupFaction = new map<int, FactionKey>();
+	ref map<int, int> m_mGroupPresetIndex = new map<int, int>();
+	// Per-player deployment selection (group + loadout prefab + spawn point).
+	ref map<int, int> m_playersSelGroup = new map<int, int>();
+	ref map<int, ResourceName> m_playersSelLoadout = new map<int, ResourceName>();
+	ref map<int, RplId> m_playersSelSpawn = new map<int, RplId>();
+
+	ref ScriptInvokerInt m_eOnDeploymentGroupRegistered = new ScriptInvokerInt(); // groupID
+	ScriptInvokerInt GetOnDeploymentGroupRegistered()
+	{
+		return m_eOnDeploymentGroupRegistered;
+	}
+	ref ScriptInvokerInt m_eOnPlayerSelectionChange = new ScriptInvokerInt(); // playerId
+	ScriptInvokerInt GetOnPlayerSelectionChange()
+	{
+		return m_eOnPlayerSelectionChange;
+	}
+
 	// Invokers
 	ref ScriptInvokerInt m_eOnPlayerConnected = new ScriptInvokerInt();
 	ScriptInvokerInt GetOnPlayerConnected()
@@ -234,8 +255,11 @@ class PS_PlayableManager : ScriptComponent
 			}
 		}
 
+		Print("[PVE APPLY] player=" + playerId + " playableId=" + playableId, LogLevel.NORMAL);
+
 		IEntity entity;
 		if (playableId == RplId.Invalid()) { // switch to null entity
+			Print("[PVE APPLY] NULL playable -> lobby camera (player stays in lobby) player=" + playerId, LogLevel.WARNING);
 			// Remove group and faction
 			SCR_AIGroup currentGroup = groupsManagerComponent.GetPlayerGroup(playableId);
 			if (currentGroup)
@@ -255,8 +279,15 @@ class PS_PlayableManager : ScriptComponent
 			// Apply entity
 			playerController.SetInitialMainEntity(entity);
 			return;
-		} else
-			entity = GetPlayableById(playableId).GetPlayableComponent().GetOwner();
+		} else {
+			PS_PlayableContainer container = GetPlayableById(playableId);
+			if (!container || !container.GetPlayableComponent())
+			{
+				Print("[PVE APPLY] container/component missing for playableId=" + playableId + " player=" + playerId, LogLevel.WARNING);
+				return;
+			}
+			entity = container.GetPlayableComponent().GetOwner();
+		}
 
 		// Delete initial entity if exists
 		IEntity initialEntity = playableController.GetInitialEntity();
@@ -264,12 +295,16 @@ class PS_PlayableManager : ScriptComponent
 			m_CallQueue.Call(SCR_EntityHelper.DeleteEntityAndChildren, initialEntity);
 
 		// Apply entity
+		Print("[PVE APPLY] possessing entity for player=" + playerId, LogLevel.NORMAL);
 		playerController.SetInitialMainEntity(entity);
 
-		// Set new player faction
+		// Set new player faction (guard: a runtime-spawned loadout may not have a faction yet)
 		SCR_ChimeraCharacter playableCharacter = SCR_ChimeraCharacter.Cast(entity);
-		SCR_Faction faction = SCR_Faction.Cast(playableCharacter.GetFaction());
-		SetPlayerFactionKey(playerId, faction.GetFactionKey());
+		SCR_Faction faction;
+		if (playableCharacter)
+			faction = SCR_Faction.Cast(playableCharacter.GetFaction());
+		if (faction)
+			SetPlayerFactionKey(playerId, faction.GetFactionKey());
 
 		// Requred delay, since entity take one frame to apply controls
 		m_CallQueue.CallLater(ChangeGroup, 0, false, playerId, playableId);
@@ -304,11 +339,13 @@ class PS_PlayableManager : ScriptComponent
 		if (playerGroup)
 			playerControllerGroupComponent.PS_AskJoinGroup(playerGroup.GetGroupID());
 
-		// Another workaround
-		// Thanks bohem, no one zoomer will be harmed if you remove all text from game.
-		// Maybe also multiplayer from arma? It can harm people, very dangerous.
-		if (playerGroup && playerGroup.GetNameAuthorID() == -1)
-			playerGroup.SetCustomName(playerGroup.GetCustomName(), playerId);
+		// Reforger Lobby Conflict Edition: our deployment groups are named from server-authored presets (author == -1).
+		// SCR_AIGroup.GetCustomName() blanks any name authored by a real player as UGC, so the original
+		// "workaround" below (re-author the name to the joining playerId) actually HID the preset name
+		// on clients -> "group names not preserved". Keep the server authorship (-1) so the chosen
+		// group's name stays visible after deploy.
+		// if (playerGroup && playerGroup.GetNameAuthorID() == -1)
+		// 	playerGroup.SetCustomName(playerGroup.GetCustomName(), playerId);
 
 
 		// Switch leader if need
@@ -353,15 +390,35 @@ class PS_PlayableManager : ScriptComponent
 			if (!playableGroup.m_PlayersGroup)
 			{
 				SCR_GroupsManagerComponent groupsManagerComponent = SCR_GroupsManagerComponent.GetInstance();
-				playerGroup = groupsManagerComponent.CreateNewPlayableGroup(playableGroup.GetFaction());
+
+				// Reforger Lobby Conflict Edition: if this character was deployed from the lobby into a chosen group,
+				// reuse THAT named deployment group as the player group instead of spawning a fresh,
+				// unnamed one ("Atlas Green 1"). The AI group the loadout actually landed in becomes the
+				// bots group behind the chosen player group. Binding by groupID is robust regardless of
+				// which slave/auto group the spawned loadout ended up in.
+				SCR_AIGroup chosenGroup;
+				int deployGroupId = playableComponent.PS_GetDeployGroupID();
+				if (deployGroupId > 0)
+					chosenGroup = groupsManagerComponent.FindGroup(deployGroupId);
+
+				if (chosenGroup)
+				{
+					playerGroup = chosenGroup;
+					Print("[PVE GROUP] reuse chosen deployment group id=" + deployGroupId + " for playable=" + playableId, LogLevel.NORMAL);
+				}
+				else
+				{
+					playerGroup = groupsManagerComponent.CreateNewPlayableGroup(playableGroup.GetFaction());
+					playerGroup.SetMaxMembers(playableGroup.m_aUnitPrefabSlots.Count());
+					playerGroup.SetCustomName(playableGroup.GetCustomName(), -1);
+					Print("[PVE GROUP] no chosen group (id=" + deployGroupId + "), created new player group for playable=" + playableId, LogLevel.WARNING);
+				}
 
 				// Setup link, command system override slave group
 				// TODO: somehow move from PSCore
 				playerGroup.m_BotsGroup = playableGroup;
 				playableGroup.m_PlayersGroup = playerGroup;
 
-				playerGroup.SetMaxMembers(playableGroup.m_aUnitPrefabSlots.Count());
-				playerGroup.SetCustomName(playableGroup.GetCustomName(), -1);
 				playableGroup.SetCanDeleteIfNoPlayer(false);
 				playerGroup.SetCanDeleteIfNoPlayer(false);
 				playableGroup.SetDeleteWhenEmpty(false);
@@ -567,6 +624,195 @@ class PS_PlayableManager : ScriptComponent
 		if (factionKey != "")
 			m_playersFactionRemembered[playerId] = factionKey; // Remember last not null
 		m_eOnFactionChange.Invoke(playerId, factionKey, factionKeyOld);
+	}
+
+	// ------------------------------- Deployment groups (PvE) ------------------------------------
+	// Server registers a generated playable group and broadcasts the groupID -> (faction, presetIndex)
+	// mapping so every machine can resolve the authored SCR_GroupRolePresetConfig for that group.
+	// - Execute ONLY on server
+	void RegisterDeploymentGroup(int groupID, FactionKey factionKey, int presetIndex)
+	{
+		RPC_RegisterDeploymentGroup(groupID, factionKey, presetIndex);
+		Rpc(RPC_RegisterDeploymentGroup, groupID, factionKey, presetIndex);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Broadcast)]
+	protected void RPC_RegisterDeploymentGroup(int groupID, FactionKey factionKey, int presetIndex)
+	{
+		m_mGroupFaction.Set(groupID, factionKey);
+		m_mGroupPresetIndex.Set(groupID, presetIndex);
+		m_eOnDeploymentGroupRegistered.Invoke(groupID);
+	}
+	// Re-send all known group mappings to a single (late-joining) player.
+	// - Execute ONLY on server
+	void SendDeploymentGroupsToPlayer(int playerId)
+	{
+		PlayerController playerController = m_PlayerManager.GetPlayerController(playerId);
+		if (!playerController)
+			return;
+		foreach (int groupID, FactionKey factionKey : m_mGroupFaction)
+		{
+			int presetIndex = 0;
+			m_mGroupPresetIndex.Find(groupID, presetIndex);
+			Rpc(RPC_RegisterDeploymentGroup, groupID, factionKey, presetIndex);
+		}
+	}
+	// Resolve the authored preset for a generated group (works on server and clients).
+	SCR_GroupRolePresetConfig GetGroupPreset(int groupID)
+	{
+		FactionKey factionKey;
+		if (!m_mGroupFaction.Find(groupID, factionKey))
+			return null;
+		int presetIndex;
+		if (!m_mGroupPresetIndex.Find(groupID, presetIndex))
+			return null;
+		SCR_FactionManager factionManager = SCR_FactionManager.Cast(GetGame().GetFactionManager());
+		if (!factionManager)
+			return null;
+		SCR_Faction faction = SCR_Faction.Cast(factionManager.GetFactionByKey(factionKey));
+		if (!faction)
+			return null;
+		array<SCR_GroupRolePresetConfig> presets = {};
+		faction.GetGroupRolePresetConfigs(presets);
+		if (presetIndex < 0 || presetIndex >= presets.Count())
+			return null;
+		return presets[presetIndex];
+	}
+	// All generated group IDs for a faction (lobby uses this to list groups).
+	void GetDeploymentGroupsForFaction(FactionKey factionKey, out array<int> groupIDs)
+	{
+		groupIDs = {};
+		foreach (int groupID, FactionKey groupFaction : m_mGroupFaction)
+		{
+			if (groupFaction == factionKey)
+				groupIDs.Insert(groupID);
+		}
+	}
+	// Count of connected players who currently have this group selected (lobby occupancy).
+	int GetGroupSelectedCount(int groupID)
+	{
+		int count = 0;
+		array<int> players = {};
+		GetGame().GetPlayerManager().GetPlayers(players);
+		foreach (int playerId : players)
+		{
+			int selectedGroup = 0;
+			if (m_playersSelGroup.Find(playerId, selectedGroup) && selectedGroup == groupID)
+				count++;
+		}
+		return count;
+	}
+	// Count of connected players who currently have this exact group + loadout selected.
+	int GetLoadoutSelectedCount(int groupID, ResourceName loadout)
+	{
+		int count = 0;
+		array<int> players = {};
+		GetGame().GetPlayerManager().GetPlayers(players);
+		foreach (int playerId : players)
+		{
+			int selGroup = 0;
+			ResourceName selLoadout = "";
+			m_playersSelGroup.Find(playerId, selGroup);
+			m_playersSelLoadout.Find(playerId, selLoadout);
+			if (selGroup == groupID && selLoadout == loadout)
+				count++;
+		}
+		return count;
+	}
+	// Comma-separated names of connected players who have this group + loadout selected.
+	string GetLoadoutSelectedNames(int groupID, ResourceName loadout)
+	{
+		string names = "";
+		PlayerManager pm = GetGame().GetPlayerManager();
+		array<int> players = {};
+		pm.GetPlayers(players);
+		foreach (int playerId : players)
+		{
+			int selGroup = 0;
+			ResourceName selLoadout = "";
+			m_playersSelGroup.Find(playerId, selGroup);
+			m_playersSelLoadout.Find(playerId, selLoadout);
+			if (selGroup == groupID && selLoadout == loadout)
+			{
+				if (names != "")
+					names = names + ", ";
+				names = names + pm.GetPlayerName(playerId);
+			}
+		}
+		return names;
+	}
+
+	// Resolve a palette loadout ResourceName to its loadout object (for name / icon).
+	SCR_BasePlayerLoadout GetLoadoutByResource(ResourceName loadoutResource)
+	{
+		SCR_LoadoutManager loadoutManager = GetGame().GetLoadoutManager();
+		if (!loadoutManager)
+			return null;
+		array<SCR_BasePlayerLoadout> loadouts = {};
+		loadoutManager.GetPlayerLoadouts(loadouts);
+		foreach (SCR_BasePlayerLoadout loadout : loadouts)
+		{
+			if (loadout && loadout.GetLoadoutResource() == loadoutResource)
+				return loadout;
+		}
+		return null;
+	}
+
+	// ------------------------------- Deployment selection (PvE) ---------------------------------
+	int GetPlayerSelectedGroup(int playerId)
+	{
+		int groupID = 0;
+		m_playersSelGroup.Find(playerId, groupID);
+		return groupID;
+	}
+	// - Execute ONLY on server
+	void SetPlayerSelectedGroup(int playerId, int groupID)
+	{
+		RPC_SetPlayerSelectedGroup(playerId, groupID);
+		Rpc(RPC_SetPlayerSelectedGroup, playerId, groupID);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Broadcast)]
+	protected void RPC_SetPlayerSelectedGroup(int playerId, int groupID)
+	{
+		m_playersSelGroup.Set(playerId, groupID);
+		m_eOnPlayerSelectionChange.Invoke(playerId);
+	}
+
+	ResourceName GetPlayerSelectedLoadout(int playerId)
+	{
+		ResourceName loadout = "";
+		m_playersSelLoadout.Find(playerId, loadout);
+		return loadout;
+	}
+	// - Execute ONLY on server
+	void SetPlayerSelectedLoadout(int playerId, ResourceName loadout)
+	{
+		RPC_SetPlayerSelectedLoadout(playerId, loadout);
+		Rpc(RPC_SetPlayerSelectedLoadout, playerId, loadout);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Broadcast)]
+	protected void RPC_SetPlayerSelectedLoadout(int playerId, ResourceName loadout)
+	{
+		m_playersSelLoadout.Set(playerId, loadout);
+		m_eOnPlayerSelectionChange.Invoke(playerId);
+	}
+
+	RplId GetPlayerSelectedSpawn(int playerId)
+	{
+		RplId spawnId = RplId.Invalid();
+		m_playersSelSpawn.Find(playerId, spawnId);
+		return spawnId;
+	}
+	// - Execute ONLY on server
+	void SetPlayerSelectedSpawn(int playerId, RplId spawnId)
+	{
+		RPC_SetPlayerSelectedSpawn(playerId, spawnId);
+		Rpc(RPC_SetPlayerSelectedSpawn, playerId, spawnId);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Broadcast)]
+	protected void RPC_SetPlayerSelectedSpawn(int playerId, RplId spawnId)
+	{
+		m_playersSelSpawn.Set(playerId, spawnId);
+		m_eOnPlayerSelectionChange.Invoke(playerId);
 	}
 
 	// ------------------------------------- Player state -----------------------------------------

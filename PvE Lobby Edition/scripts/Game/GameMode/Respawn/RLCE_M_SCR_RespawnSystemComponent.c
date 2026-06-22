@@ -46,16 +46,44 @@ modded class SCR_RespawnSystemComponent : RespawnSystemComponent
 	//! \param[in] data
 	//! \return
 	override SCR_BaseSpawnPointRequestResultInfo GetSpawnPointRequestResultInfo(SCR_SpawnRequestComponent requestComponent, SCR_ESpawnResult response, SCR_SpawnData data){	return null;	} 
-	static override SCR_RespawnSystemComponent GetInstance()	{return null;}
+	// Reforger Lobby Conflict Edition: the pause-menu "Respawn" must work so a deployed player can send themselves
+	// back to the deployment lobby (PROJECT.md #4). The vanilla pause menu gates that button on
+	// GetInstance() + IsPauseMenuRespawnEnabled(); returning null/false here made the button dead
+	// ("clicking Respawn -> Confirm does nothing"). Restore the lookup and enable the flags. The
+	// actual respawn is a suicide (SCR_RespawnComponent.RequestPlayerSuicide -> ForceDeath) which
+	// trips PS_PlayableComponent.OnDamageStateChange -> PS_GameModeCoop.TryRespawn -> reopen lobby.
+	// The vanilla spawn/deploy pipeline stays neutered: its menus are suppressed elsewhere
+	// (PS_M_SCR_PlayerDeployMenuHandlerComponent + PS_M_SCR_WelcomeScreenMenu) and the spawn-logic
+	// entry points below remain no-ops.
+	static override SCR_RespawnSystemComponent GetInstance()
+	{
+		if (!s_Instance)
+		{
+			BaseGameMode pGameMode = GetGame().GetGameMode();
+			if (pGameMode)
+				s_Instance = SCR_RespawnSystemComponent.Cast(pGameMode.FindComponent(SCR_RespawnSystemComponent));
+		}
+		return s_Instance;
+	}
 	override RplComponent GetRplComponent()	{return null;}
 	static override MenuBase OpenRespawnMenu()	{return null;} 
 	static override void CloseRespawnMenu()	{return;} 
 	override void ServerSetEnableRespawn(bool enableSpawning){return;}  
-	override bool IsRespawnEnabled()	{return false;} 
-	override bool IsPauseMenuRespawnEnabled() {return null;} 
+	override bool IsRespawnEnabled()	{return true;} 
+	override bool IsPauseMenuRespawnEnabled() {return true;} 
 	override bool IsFactionChangeAllowed() {return false;} 
-	override ScriptInvoker GetOnRespawnEnabledChanged() {return null;} 
+	// Return a valid (empty) invoker: now that GetInstance() is restored the pause menu may subscribe
+	// to respawn-enabled changes, and inserting into a null invoker would crash.
+	override ScriptInvoker GetOnRespawnEnabledChanged()
+	{
+		if (!Event_OnRespawnEnabledChanged)
+			Event_OnRespawnEnabledChanged = new ScriptInvoker();
+		return Event_OnRespawnEnabledChanged;
+	}
 	override void OnPlayerRegistered_S(int playerId) {return;}	
 	override void OnInit(IEntity owner) {return;}
 	override void OnPlayerAuditSuccess_S(int playerId)	{return;}
+	// Reforger Lobby Conflict Edition: respawn/spawn-logic is neutered, so m_SpawnLogic is null. The vanilla
+	// OnPlayerDisconnected_S forwards to m_SpawnLogic and crashes (NULL pointer) on disconnect.
+	override void OnPlayerDisconnected_S(int playerId, KickCauseCode cause, int timeout) {return;}
 }

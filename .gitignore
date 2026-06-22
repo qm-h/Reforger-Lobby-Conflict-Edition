@@ -1,3 +1,21 @@
 
 resourceDatabase.rdb
 PSDEV.png
+# Added by code-review-graph
+.code-review-graph/
+
+.cursor
+.claude
+.kiro
+.omc
+.vscode
+
+# Local agent & tooling config (not part of the mod)
+.cursorrules
+.opencode.json
+.mcp.json
+AGENTS.md
+
+# Local working artifacts
+logs/
+base_state/

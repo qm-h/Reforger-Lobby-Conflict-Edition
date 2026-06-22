@@ -64,6 +64,9 @@ PS_GameModeCoop : "{0F307326459A1395}Prefabs/MP/Modes/GameMode_Base.et" {
    m_fDuration 0
    m_bDisableControls 0
   }
+  SCR_ReconnectComponent "{5A02809D5E8ABE42}" {
+   Enabled 0
+  }
   SCR_RespawnSystemComponent "{56B2B4793051E7C9}" {
    Enabled 1
   }
@@ -74,9 +77,6 @@ PS_GameModeCoop : "{0F307326459A1395}Prefabs/MP/Modes/GameMode_Base.et" {
   SCR_VotingManagerComponent "{5650BB6B6089393A}" {
    Enabled 0
   }
-  SCR_ReconnectComponent "{5A02809D5E8ABE42}" {
-   Enabled 0
-  }
  }
  coords 0 0 0
  PlayerControllerPrefab "{4E5DAC62A374950F}Prefabs/Characters/Core/DefaultPlayerControllerMP_Coop.et"
@@ -84,9 +84,6 @@ PS_GameModeCoop : "{0F307326459A1395}Prefabs/MP/Modes/GameMode_Base.et" {
  m_bAllowFactionChange 0
  m_bHolsterWeapon 0
  {
-  SCR_FactionManager "5EA8C932C68D400F" : "{4A188E44289B9A50}Prefabs/MP/Managers/Factions/FactionManager_Editor.et" {
-   ID "5ED9088735FF2D8B"
-  }
   RadioManagerEntity : "{B8E09FAB91C4ECCD}Prefabs/Systems/Radio/RadioManager.et" {
    ID "5ED9088735FF2DEE"
   }

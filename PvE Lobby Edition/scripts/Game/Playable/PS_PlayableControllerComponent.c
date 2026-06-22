@@ -52,6 +52,109 @@ class PS_PlayableControllerComponent : ScriptComponent
 		playableManager.SetFactionReady(factionKey, readyValue);
 	}
 
+	// ------ Deployment selection (PvE): owner -> server, applies to the calling player only ------
+	void SetSelectedGroup(int groupID)
+	{
+		Rpc(RPC_SetSelectedGroup, groupID);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	void RPC_SetSelectedGroup(int groupID)
+	{
+		PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+		if (!thisPlayerController)
+			return;
+		PS_PlayableManager.GetInstance().SetPlayerSelectedGroup(thisPlayerController.GetPlayerId(), groupID);
+	}
+
+	void SetSelectedLoadout(ResourceName loadout)
+	{
+		Rpc(RPC_SetSelectedLoadout, loadout);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	void RPC_SetSelectedLoadout(ResourceName loadout)
+	{
+		PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+		if (!thisPlayerController)
+			return;
+		PS_PlayableManager.GetInstance().SetPlayerSelectedLoadout(thisPlayerController.GetPlayerId(), loadout);
+	}
+
+	void SetSelectedSpawn(RplId spawnId)
+	{
+		Rpc(RPC_SetSelectedSpawn, spawnId);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	void RPC_SetSelectedSpawn(RplId spawnId)
+	{
+		PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+		if (!thisPlayerController)
+			return;
+		PS_PlayableManager.GetInstance().SetPlayerSelectedSpawn(thisPlayerController.GetPlayerId(), spawnId);
+	}
+
+	// Reforger Lobby Conflict Edition: "Play" deploys ONLY the requesting player using their lobby selection
+	// (group + loadout prefab + spawn point). Does not advance global game state (PROJECT.md #2).
+	void RequestDeploy()
+	{
+		Rpc(RPC_RequestDeploy);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	void RPC_RequestDeploy()
+	{
+		PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+		if (!thisPlayerController)
+			return;
+		PS_GameModeCoop gameMode = PS_GameModeCoop.Cast(GetGame().GetGameMode());
+		if (gameMode)
+			gameMode.RequestDeploy(thisPlayerController.GetPlayerId());
+	}
+
+	// Reforger Lobby Conflict Edition: pause-menu "Respawn" must send the player back to the deployment lobby
+	// (PROJECT.md #4). Routed through the server so the kill + lobby re-open are authoritative and do
+	// not depend on the (sometimes unreliable) client-side death detection.
+	void PS_RequestReturnToLobby()
+	{
+		Rpc(RPC_PS_RequestReturnToLobby);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	void RPC_PS_RequestReturnToLobby()
+	{
+		PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+		if (!thisPlayerController)
+			return;
+		PS_GameModeCoop gameMode = PS_GameModeCoop.Cast(GetGame().GetGameMode());
+		if (!gameMode)
+			return;
+
+		// Reforger Lobby Conflict Edition: mirror the (proven) enemy-death path instead of switching menus directly.
+		// Being killed by an enemy is a server-authoritative death that reliably runs
+		// OnDamageStateChange -> TryRespawn -> ReturnPlayerToLobby; the pause-menu path used to switch
+		// the camera/menu while the player was still alive, which raced and "did nothing". So if the
+		// player still controls a deployed body, kill it authoritatively here and let that same death
+		// pipeline re-open the lobby. Only fall back to a direct return when there is no live body to
+		// kill (e.g. already on the lobby camera).
+		IEntity controlled = thisPlayerController.GetControlledEntity();
+		IEntity initialEntity = GetInitialEntity();
+		if (controlled && controlled != initialEntity)
+		{
+			CharacterControllerComponent characterController = CharacterControllerComponent.Cast(controlled.FindComponent(CharacterControllerComponent));
+			if (characterController && !characterController.IsDead())
+			{
+				// Explicit "Respawn Menu" request: mark it so the death pipeline returns the player to
+				// the lobby even when they are a Game Master (whose automatic delete/death return is
+				// otherwise suppressed to keep them in the editor). Marked here — only when we actually
+				// route through the death pipeline — so the flag never lingers on the direct path below.
+				gameMode.MarkExplicitLobbyReturn(thisPlayerController.GetPlayerId());
+				Print("[PVE RESPAWN] server authoritative suicide -> death pipeline", LogLevel.NORMAL);
+				characterController.ForceDeath();
+				return;
+			}
+		}
+
+		// No deployed body to kill -> just (re)open the lobby.
+		gameMode.ReturnPlayerToLobby(thisPlayerController.GetPlayerId());
+	}
+
 	// ------ MenuState ------
 	void SetMenuState(SCR_EGameModeState state)
 	{
@@ -75,6 +178,7 @@ class PS_PlayableControllerComponent : ScriptComponent
 
 	void SwitchToMenu(SCR_EGameModeState state)
 	{
+		Print("[PVE UI] SwitchToMenu state=" + state, LogLevel.NORMAL);
 		SetMenuState(state);
 		MenuBase topMenu = GetGame().GetMenuManager().GetTopMenu();
 		if (topMenu)
@@ -86,10 +190,15 @@ class PS_PlayableControllerComponent : ScriptComponent
 		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.FadeToGame);
 		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.DebriefingMenu);
 		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.PlayableRespawnMenu);
+		// Reforger Lobby Conflict Edition: the vanilla deploy/welcome screen ("Get Back to the battlefield!") is the
+		// RespawnSuperMenu. It can sit under our CoopLobby and otherwise stays visible after deploy.
+		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.RespawnSuperMenu);
 		switch (state)
 		{
+			// Reforger Lobby Conflict Edition (PROJECT.md): everything happens on the CoopLobby screen.
+			// Preview and Briefing are disabled — any switch to them lands on the lobby instead.
 			case SCR_EGameModeState.PREGAME:
-				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.PreviewMapMenu);
+				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.CoopLobby);
 				break;
 			case SCR_EGameModeState.SLOTSELECTION:
 				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.CoopLobby);
@@ -98,13 +207,30 @@ class PS_PlayableControllerComponent : ScriptComponent
 				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.CutsceneMenu);
 				break;
 			case SCR_EGameModeState.BRIEFING:
-				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.BriefingMapMenu);
+				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.CoopLobby);
 				break;
 			case SCR_EGameModeState.GAME:
-				GetGame().GetCallqueue().Call(ApplyPlayable);
-				GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.FadeToGame);
+			{
+				// Reforger Lobby Conflict Edition (PROJECT.md hard rule #1): on the Conflict base the global state is
+				// permanently GAME. The legacy PS flow opened the lobby in PREGAME/SLOTSELECTION, but
+				// SCR_GameModeCampaign starts in GAME and never visits those states, so we'd land on the
+				// spectator/fade path instead of the lobby. Branch per-player here: an undeployed player
+				// (no playable assigned) must see the deployment lobby; a deployed one fades into the world.
+				PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+				PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
+				if (playableManager && thisPlayerController
+					&& playableManager.GetPlayableByPlayer(thisPlayerController.GetPlayerId()) == RplId.Invalid())
+				{
+					GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.CoopLobby);
+				}
+				else
+				{
+					GetGame().GetCallqueue().Call(ApplyPlayable);
+					GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.FadeToGame);
+				}
 				break;
-			// Persistent PvE (PROJECT.md): debriefing removed. These states are
+			}
+			// Reforger Lobby Conflict Edition (PROJECT.md): debriefing removed. These states are
 			// unreachable now (state frozen in GAME); never open the debriefing menu.
 			case SCR_EGameModeState.DEBRIEFING:
 				break;
@@ -597,15 +723,20 @@ class PS_PlayableControllerComponent : ScriptComponent
 	void UpdatePosition(bool force)
 	{
 		RplComponent rpl = RplComponent.Cast(GetOwner().FindComponent(RplComponent));
-		if (!rpl.IsOwner())
+		if (!rpl || !rpl.IsOwner())
 			return;
 		
 		// Lets fight with phisyc engine
 		if (m_InitialEntity)
 		{
 			PlayerController thisPlayerController = PlayerController.Cast(GetOwner());
+			if (!thisPlayerController)
+				return;
 			int playerId = thisPlayerController.GetPlayerId();
-			m_vVoNPosition = Vector(0, 100000, 0) + Vector(1000 * Math.Mod(playerId, 10), 5000 * Math.Floor(Math.Mod(playerId, 100) / 10), 5000 * Math.Floor(playerId / 100));
+			// Reforger Lobby Conflict Edition: keep the lobby entity inside the world bounds (see
+			// PS_GameModeCoop.GetLobbyEntityPosition). The legacy y=100000 position asserts
+			// ("Entity out of world bounds") and crashes on smaller/custom worlds.
+			m_vVoNPosition = PS_GameModeCoop.GetLobbyEntityPosition(playerId);
 			vector currentOrigin = m_InitialEntity.GetOrigin();
 			//if (currentOrigin == m_vVoNPosition) return;
 			//Print("Move to: " + m_vVoNPosition.ToString());

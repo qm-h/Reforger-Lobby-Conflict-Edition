@@ -60,22 +60,34 @@ class PS_GameModeHeader : ScriptedWidgetComponent
 		m_hButtonInGame = PS_GameModeHeaderButton.Cast(m_wButtonInGame.FindHandler(PS_GameModeHeaderButton));
 		m_hButtonDebriefing = PS_GameModeHeaderButton.Cast(m_wButtonDebriefing.FindHandler(PS_GameModeHeaderButton));	
 		
-		m_hButtonPreview.m_OnClicked.Insert(Action_PreviewOpen);
+		// Reforger Lobby Conflict Edition (PROJECT.md): everything happens on the CoopLobby screen. Only the
+		// Lobby tab is wired/visible; Preview, Briefing, InGame and Debriefing tabs are hidden
+		// and unwired so players cannot navigate away from the lobby.
 		m_hButtonLobby.m_OnClicked.Insert(Action_LobbyOpen);
-		m_hButtonInGame.m_OnClicked.Insert(Action_InGameOpen);
-		m_hButtonBriefing.m_OnClicked.Insert(Action_BriefingOpen);
-		// Persistent PvE (PROJECT.md): debriefing is removed. Hide its header button
-		// and do not wire its click handler so no UI path opens the debriefing menu.
+		m_wButtonPreview.SetVisible(false);
+		m_wButtonBriefing.SetVisible(false);
+		m_wButtonInGame.SetVisible(false);
 		m_wButtonDebriefing.SetVisible(false);
 		
 		m_bButtonAdvance = PS_GameModeHeaderButton.Cast(w.FindAnyWidget("AdvanceButton").FindHandler(PS_GameModeHeaderButton));
 		m_wAdvanceImage = ImageWidget.Cast(w.FindAnyWidget("AdvanceButton").FindAnyWidget("AdvanceImage"));
+		// Reforger Lobby Conflict Edition: no global state advancing; hide the advance (play) button.
+		w.FindAnyWidget("AdvanceButton").SetVisible(false);
 		
 		m_MissionHeader = SCR_MissionHeader.Cast(GetGame().GetMissionHeader());
 		if (m_MissionHeader)
 		{
+			Print("[PVE UI] GameModeHeader missionHeader=OK name=" + m_MissionHeader.m_sName + " author=" + m_MissionHeader.m_sAuthor, LogLevel.NORMAL);
 			m_wTitleText.SetText(m_MissionHeader.m_sName);
 			m_wAuthorRichText.SetTextFormat("<color rgba='226,167,79,255'>#PS-GameModeHeader_Author:</color> %1", m_MissionHeader.m_sAuthor);
+		}
+		else
+		{
+			// Reforger Lobby Conflict Edition: never leave the layout placeholder ("Mission name"/"Mission author")
+			// visible when no mission header is available; blank them instead.
+			Print("[PVE UI] GameModeHeader missionHeader=NULL (placeholder blanked)", LogLevel.WARNING);
+			m_wTitleText.SetText("");
+			m_wAuthorRichText.SetText("");
 		}
 		
 		ChimeraWorld world = GetGame().GetWorld();
@@ -241,6 +253,6 @@ class PS_GameModeHeader : ScriptedWidgetComponent
 	}
 	void Action_DebriefingOpen(SCR_ButtonBaseComponent button)
 	{
-		// Persistent PvE (PROJECT.md): debriefing removed. No-op so nothing opens it.
+		// Reforger Lobby Conflict Edition (PROJECT.md): debriefing removed. No-op so nothing opens it.
 	}
 }

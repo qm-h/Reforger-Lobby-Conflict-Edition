@@ -1,9 +1,9 @@
 GameProject {
  ID "PvELobbyEdition"
  GUID "69A8A9F6D2B67EBE"
- TITLE "PvE Lobby Edition"
+ TITLE "Reforger Lobby Conflict Edition"
  Dependencies {
-  "58D0FB3206B6F859" "1337133713371337" "5BA504A5BC934CC2"
+  "58D0FB3206B6F859" "1337133713371337" "5AAAC70D754245DD"
  }
  Configurations {
   GameProjectConfig PC {

@@ -2,11 +2,11 @@
 // Open lobby on game start
 // Disable respawn logic
 
-class PS_GameModeCoopClass : SCR_BaseGameModeClass
+class PS_GameModeCoopClass : SCR_GameModeCampaignClass
 {
 }
 
-class PS_GameModeCoop : SCR_BaseGameMode
+class PS_GameModeCoop : SCR_GameModeCampaign
 {
 	[Attribute("120000", UIWidgets.EditBox, "Time during which disconnected players reserve role for reconnection in ms, -1 for infinity time", "", category: "Reforger Lobby")]
 	int m_iReconnectTime;
@@ -164,6 +164,8 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		{
 			PS_VoNRoomsManager.GetInstance().GetOrCreateRoomWithFaction("", "#PS-VoNRoom_Global");
 
+			GenerateDeploymentGroups();
+
 			m_fCurrentFreezeTime = m_iReconnectTime;
 			Replication.BumpMe();
 		}
@@ -244,7 +246,18 @@ class PS_GameModeCoop : SCR_BaseGameMode
 
 		playableController.SaveCameraTransform();
 		playableController.SwitchFromObserver();
-		
+
+		// Persistent PvE: a player with no playable (e.g. a Game Master who deleted their own character)
+		// must drop into the deployment lobby on editor close — not re-deploy a now-deleted body. Route
+		// through the server so the lobby/initial camera entity is (re)created authoritatively and the
+		// CoopLobby opens cleanly.
+		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
+		if (playableManager && playableManager.GetPlayableByPlayer(playerController.GetPlayerId()) == RplId.Invalid())
+		{
+			playableController.PS_RequestReturnToLobby();
+			return;
+		}
+
 		IEntity entity = playerController.GetControlledEntity();
 		if (!entity)
 		{
@@ -555,6 +568,11 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		#else
 		GetGame().GetCallqueue().CallLater(SpawnInitialEntity, 100, false, playerId);
 		#endif
+
+		// Reforger Lobby Conflict Edition: groups are generated once at server boot, so virtually every player is a
+		// late-joiner. Re-send the groupID -> preset mapping once the manager is replicated to them.
+		GetGame().GetCallqueue().CallLater(playableManager.SendDeploymentGroupsToPlayer, 1000, false, playerId);
+
 		m_OnPlayerConnected.Invoke(playerId);
 	}
 
@@ -718,6 +736,45 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		playableController.SwitchToMenu(state);
 	}
 
+	// Reforger Lobby Conflict Edition: per-player position of the lobby camera entity (InitialPlayer). The legacy
+	// y=100000 "off-map" position triggers the engine assertion "Entity out of world bounds" on
+	// smaller/custom worlds and crashes. We place players on a small grid near the map origin, just
+	// above the terrain surface (guaranteed in-bounds). Used by both SpawnInitialEntity and
+	// PS_PlayableControllerComponent.UpdatePosition so they never disagree (which would re-teleport
+	// the entity back out of bounds). Raise the +2 offset if your world's vertical bounds allow it.
+	static vector GetLobbyEntityPosition(int playerId)
+	{
+		// Per-player horizontal spread so multiple lobby characters never overlap.
+		float gx = 1000 * Math.Mod(playerId, 10);
+		float gz = 1000 * Math.Floor(Math.Mod(playerId, 100) / 10) + 5000 * Math.Floor(playerId / 100);
+		// Reforger Lobby Conflict Edition: park the invisible lobby character well ABOVE the terrain/sea so the 3D
+		// view stays empty (the menu background shows) and no ambient water sound plays when the
+		// surface under the spawn grid is below sea level. The original mod used a fixed y=100000,
+		// but that crashes ("Entity out of world bounds") on smaller/custom maps, so we stay a
+		// bounded distance above the surface and clamp to the world's vertical ceiling.
+		float gy = 1000;
+		BaseWorld world = GetGame().GetWorld();
+		if (world)
+		{
+			float surfaceY = world.GetSurfaceY(gx, gz);
+			gy = surfaceY + 1000.0;
+
+			vector mins;
+			vector maxs;
+			world.GetBoundBox(mins, maxs);
+			gx = Math.Clamp(gx, mins[0] + 10.0, maxs[0] - 10.0);
+			gz = Math.Clamp(gz, mins[2] + 10.0, maxs[2] - 10.0);
+
+			float ceiling = maxs[1] - 10.0;
+			if (gy > ceiling)
+				gy = ceiling;
+			// Never end up below the surface (clipping / underwater) if the ceiling is very low.
+			if (gy < surfaceY + 5.0)
+				gy = surfaceY + 5.0;
+		}
+		return Vector(gx, gy, gz);
+	}
+
 	void SpawnInitialEntity(int playerId)
 	{
 		#ifdef WORKBENCH
@@ -730,7 +787,7 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		Resource resource = Resource.Load("{ADDE38E4119816AB}Prefabs/InitialPlayer_Version2.et");
 		EntitySpawnParams params = new EntitySpawnParams();
 		GetTransform(params.Transform);
-		vector position = Vector(0, 100000, 0) + Vector(1000 * Math.Mod(playerId, 10), 5000 * Math.Floor(Math.Mod(playerId, 100) / 10), 5000 * Math.Floor(playerId / 100));
+		vector position = GetLobbyEntityPosition(playerId);
 		params.Transform[3] = position;
 		IEntity initialEntity = GetGame().SpawnEntityPrefab(resource, GetGame().GetWorld(), params);
 		PlayerManager playerManager = GetGame().GetPlayerManager();
@@ -741,23 +798,96 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		VoNRoomsManager.RestoreRoom(playerId);
 	}
 
-	void TryRespawn(RplId playableId, int playerId)
+	// Reforger Lobby Conflict Edition: players who explicitly requested a return to the lobby (pause-menu / Respawn
+	// Menu). A Game Master who merely deletes/loses their controlled character must NOT be dropped to
+	// the lobby automatically (player = "dead" but kept in the editor); they only leave the editor for
+	// the lobby through this explicit request. Consumed by the death pipeline in TryRespawn.
+	protected ref array<int> m_aExplicitLobbyReturnPlayers = {};
+
+	void MarkExplicitLobbyReturn(int playerId)
 	{
-		// Persistent PvE (PROJECT.md #4): a dead player always returns to the
-		// deployment lobby to redeploy. No mission auto-respawn / faction respawn-count.
-		// Release the dead playable and put the player back on the lobby entity...
-		SwitchToInitialEntity(playerId);
-		// ...then re-open the deployment lobby (CoopLobby) on the dead player's client.
-		if (playerId > 0)
+		if (playerId > 0 && !m_aExplicitLobbyReturnPlayers.Contains(playerId))
+			m_aExplicitLobbyReturnPlayers.Insert(playerId);
+	}
+
+	protected bool ConsumeExplicitLobbyReturn(int playerId)
+	{
+		int index = m_aExplicitLobbyReturnPlayers.Find(playerId);
+		if (index < 0)
+			return false;
+		m_aExplicitLobbyReturnPlayers.Remove(index);
+		return true;
+	}
+
+	// True when the player is currently in the full Game Master editor (not the limited player editor).
+	// Used to keep a Game Master in the editor instead of force-dropping them to the deployment lobby
+	// when their controlled character is deleted or dies.
+	bool IsPlayerInGameMaster(int playerId)
+	{
+		if (playerId <= 0)
+			return false;
+		SCR_EditorManagerCore editorManagerCore = SCR_EditorManagerCore.Cast(SCR_EditorManagerCore.GetInstance(SCR_EditorManagerCore));
+		if (!editorManagerCore)
+			return false;
+		SCR_EditorManagerEntity editorManager = editorManagerCore.GetEditorManager(playerId);
+		if (!editorManager)
+			return false;
+		return editorManager.IsOpened() && !editorManager.IsLimited();
+	}
+
+	// Reforger Lobby Conflict Edition (PROJECT.md #4): release the player's current playable, drop them back on the
+	// lobby camera and re-open the deployment lobby (CoopLobby). Used both on death and from the
+	// pause-menu "Respawn". Server-only.
+	void ReturnPlayerToLobby(int playerId)
+	{
+		if (!Replication.IsServer() || playerId <= 0)
+			return;
+
+		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(playerId));
+		PS_PlayableControllerComponent playableController;
+		if (playerController)
+			playableController = playerController.PS_GetPLayableComponent();
+
+		// Kill the currently deployed body (authoritative) so no live, unpossessed character lingers
+		// in the world after the player drops back to the lobby. NEVER touch the lobby/initial entity
+		// (this method can be re-entered by the death->TryRespawn path once the body actually dies).
+		if (playerController)
 		{
-			SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(playerId));
-			if (playerController)
+			IEntity controlled = playerController.GetControlledEntity();
+			IEntity initialEntity;
+			if (playableController)
+				initialEntity = playableController.GetInitialEntity();
+			if (controlled && controlled != initialEntity)
 			{
-				PS_PlayableControllerComponent playableController = playerController.PS_GetPLayableComponent();
-				if (playableController)
-					playableController.SwitchToMenuServer(SCR_EGameModeState.SLOTSELECTION);
+				CharacterControllerComponent characterController = CharacterControllerComponent.Cast(controlled.FindComponent(CharacterControllerComponent));
+				if (characterController && !characterController.IsDead())
+					characterController.ForceDeath();
 			}
 		}
+
+		// Release the playable -> lobby camera.
+		SwitchToInitialEntity(playerId);
+		// Re-open the deployment lobby on the player's client.
+		if (playableController)
+			playableController.SwitchToMenuServer(SCR_EGameModeState.SLOTSELECTION);
+	}
+
+	void TryRespawn(RplId playableId, int playerId)
+	{
+		// Reforger Lobby Conflict Edition (PROJECT.md #4): a dead player always returns to the
+		// deployment lobby to redeploy. No mission auto-respawn / faction respawn-count.
+		// Exception: a Game Master who deletes/loses their controlled character stays in the editor
+		// (player = "dead" but kept in Game Master). They only drop to the lobby when they explicitly
+		// press Respawn (which marks an explicit return), consumed here. We still undeploy them (clear
+		// playable + park on the lobby camera) so closing the editor / pressing Respawn menu later
+		// cleanly opens the lobby instead of re-possessing the dead body.
+		if (!ConsumeExplicitLobbyReturn(playerId) && IsPlayerInGameMaster(playerId))
+		{
+			PrepareGameMasterReturnToLobby(playerId);
+			return;
+		}
+
+		ReturnPlayerToLobby(playerId);
 
 		/* Legacy mission-respawn path — disabled for the persistent PvE lobby (kept for reference).
 		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
@@ -844,6 +974,181 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		playableManager.ApplyPlayable(playerId);
 	}
 
+	// Persistent PvE: a Game Master deleted/lost their controlled character but must STAY in the editor
+	// (PROJECT.md #4 exception). We still "undeploy" them server-side — clear the stale playable
+	// assignment and park them on the lobby camera — WITHOUT switching their menu. This way, when they
+	// later close the editor or press the Respawn menu, EditorClosed -> SwitchToMenu(GAME) sees no
+	// playable and cleanly opens the deployment lobby instead of trying to re-possess the deleted body.
+	void PrepareGameMasterReturnToLobby(int playerId)
+	{
+		if (!Replication.IsServer() || playerId <= 0)
+			return;
+		SwitchToInitialEntity(playerId);
+	}
+
+	// --------------------------------------------------------------------------------------------
+	// Reforger Lobby Conflict Edition deploy: spawn the player's chosen loadout prefab at the chosen spawn point,
+	// attach it to the chosen deployment group, and possess the requesting player.
+	// Server-only. Deploys ONLY the requesting player (PROJECT.md #2) and never changes global state.
+	void RequestDeploy(int playerId)
+	{
+		if (!Replication.IsServer())
+			return;
+		if (playerId <= 0)
+			return;
+
+		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
+		if (!playableManager)
+			return;
+
+		int groupID = playableManager.GetPlayerSelectedGroup(playerId);
+		ResourceName loadout = playableManager.GetPlayerSelectedLoadout(playerId);
+		RplId spawnId = playableManager.GetPlayerSelectedSpawn(playerId);
+
+		int spawnValid = 0;
+		if (spawnId.IsValid())
+			spawnValid = 1;
+		if (groupID <= 0 || loadout == "" || spawnValid == 0)
+		{
+			Print("[PVE DEPLOY] player=" + playerId + " incomplete selection group=" + groupID + " loadout=" + loadout + " spawnValid=" + spawnValid, LogLevel.WARNING);
+			return;
+		}
+
+		SCR_SpawnPoint spawnPoint = SCR_SpawnPoint.GetSpawnPointByRplId(spawnId);
+		if (!spawnPoint)
+		{
+			Print("[PVE DEPLOY] spawn point not found id=" + spawnId, LogLevel.WARNING);
+			return;
+		}
+
+		// Group is OPTIONAL for deployment: it's only used to attach the spawned character to a
+		// squad slave group. If it was culled (or never created), still deploy the player solo
+		// rather than blocking them in the lobby.
+		SCR_GroupsManagerComponent groupsManager = SCR_GroupsManagerComponent.GetInstance();
+		SCR_AIGroup group;
+		if (groupsManager)
+			group = groupsManager.FindGroup(groupID);
+		if (!group)
+			Print("[PVE DEPLOY] group not found id=" + groupID + " (deploying solo)", LogLevel.WARNING);
+
+		Resource resource = Resource.Load(loadout);
+		if (!resource.IsValid())
+		{
+			Print("[PVE DEPLOY] invalid loadout resource=" + loadout, LogLevel.WARNING);
+			return;
+		}
+
+		EntitySpawnParams params = new EntitySpawnParams();
+		spawnPoint.GetWorldTransform(params.Transform);
+		IEntity entity = GetGame().SpawnEntityPrefab(resource, GetGame().GetWorld(), params);
+		if (!entity)
+		{
+			Print("[PVE DEPLOY] SpawnEntityPrefab failed loadout=" + loadout, LogLevel.WARNING);
+			return;
+		}
+
+		PS_PlayableComponent playableComponent = PS_PlayableComponent.Cast(entity.FindComponent(PS_PlayableComponent));
+		if (!playableComponent)
+		{
+			// The loadout prefab must be a playable character (have PS_PlayableComponent) so the
+			// player can possess it. Vanilla Character_* prefabs without it cannot be deployed.
+			Print("[PVE DEPLOY] loadout prefab has no PS_PlayableComponent (cannot possess): " + loadout, LogLevel.WARNING);
+			SCR_EntityHelper.DeleteEntityAndChildren(entity);
+			return;
+		}
+
+		// Reforger Lobby Conflict Edition: stamp the chosen deployment group on the playable. RegisterPlayable() reads
+		// this to bind the player to the named lobby group instead of spawning a fresh, unnamed group
+		// ("Atlas Green 1"). We do NOT rely on the bots/slave linkage here: the freshly spawned loadout
+		// does not reliably land in our group's slave, so the player-group binding is forced by id.
+		playableComponent.PS_SetDeployGroupID(groupID);
+
+		if (group)
+		{
+			SCR_AIGroup slave = group.GetSlave();
+			if (slave)
+				slave.AddAIEntityToGroup(entity);
+		}
+
+		playableComponent.SetPlayable(true);
+
+		Print("[PVE DEPLOY] player=" + playerId + " deployed groupID=" + groupID + " loadout=" + loadout, LogLevel.NORMAL);
+		GetGame().GetCallqueue().Call(SwitchToDeployedEntity, playerId, entity, 30);
+	}
+
+	void SwitchToDeployedEntity(int playerId, IEntity entity, int frameCounter)
+	{
+		if (!entity)
+			return;
+
+		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
+		if (!playableManager)
+			return;
+		PS_PlayableComponent playableComponent = PS_PlayableComponent.Cast(entity.FindComponent(PS_PlayableComponent));
+		if (!playableComponent)
+			return;
+
+		// The character was just spawned: its RplId and the manager registration (RegisterPlayable
+		// runs through a couple of deferred frames) may not be ready yet. If we link the player to an
+		// invalid/unregistered playable, ApplyPlayable falls back to the off-map lobby camera and the
+		// player is stuck on the "Get Back to the battlefield!" out-of-bounds warning. Wait until both
+		// the RplId is valid AND the playable is registered before transferring control.
+		RplId playableId = playableComponent.GetRplId();
+		int rplValid = 0;
+		if (playableId.IsValid())
+			rplValid = 1;
+		int registered = 0;
+		if (playableManager.GetPlayableById(playableId))
+			registered = 1;
+		if (rplValid == 0 || registered == 0)
+		{
+			if (frameCounter > 0)
+			{
+				GetGame().GetCallqueue().Call(SwitchToDeployedEntity, playerId, entity, frameCounter - 1);
+				return;
+			}
+			Print("[PVE DEPLOY] playable not ready for possession rplValid=" + rplValid + " registered=" + registered, LogLevel.WARNING);
+			return;
+		}
+
+		Print("[PVE DEPLOY] possessing player=" + playerId + " playableId=" + playableId, LogLevel.NORMAL);
+
+		// Backstop: force the playable -> CHOSEN deployment group mapping now that the playable is
+		// registered. RegisterPlayable() runs across deferred frames and may have bound the playable to
+		// a fresh, unnamed junk group ("Atlas Green 1") instead of the picked one. We override the map
+		// BEFORE ApplyPlayable() (which schedules ChangeGroup) so the player joins the named group with
+		// its preset name + flag. Runs late = no spawn/registration timing races.
+		int chosenGroupId = playableComponent.PS_GetDeployGroupID();
+		if (chosenGroupId > 0)
+		{
+			SCR_GroupsManagerComponent groupsManager = SCR_GroupsManagerComponent.GetInstance();
+			SCR_AIGroup chosenGroup;
+			if (groupsManager)
+				chosenGroup = groupsManager.FindGroup(chosenGroupId);
+			if (chosenGroup)
+			{
+				playableManager.SetPlayablePlayerGroupId(playableId, chosenGroupId);
+				Print("[PVE GROUP] backstop bound playable=" + playableId + " -> chosen group id=" + chosenGroupId + " name=" + chosenGroup.GetCustomName(), LogLevel.NORMAL);
+			}
+			else
+			{
+				Print("[PVE GROUP] backstop FindGroup FAILED for chosen id=" + chosenGroupId, LogLevel.WARNING);
+			}
+		}
+		else
+		{
+			Print("[PVE GROUP] backstop: no chosen group id stamped on playable=" + playableId, LogLevel.WARNING);
+		}
+
+		playableManager.SetPlayerPlayable(playerId, playableId);
+		// Possess on the server directly (authoritative). Do NOT rely solely on the ForceSwitch
+		// client roundtrip — if the client doesn't process it, the player is left on the off-map
+		// lobby camera ("Get Back to the battlefield!").
+		playableManager.ApplyPlayable(playerId);
+		// Switch the client's menu out of the lobby and fade into the game.
+		playableManager.ForceSwitch(playerId);
+	}
+
 	// If after m_iReconnectTime player still disconnected release playable
 	void RemoveDisconnectedPlayer(int playerId)
 	{
@@ -853,6 +1158,89 @@ class PS_GameModeCoop : SCR_BaseGameMode
 		{
 			playableManager.SetPlayerPlayable(playerId, RplId.Invalid());
 		}
+	}
+
+	// Reforger Lobby Conflict Edition (Strategy B): build playable groups from each playable faction's
+	// SCR_GroupRolePresetConfig list. One playable group per preset; capacity and the
+	// loadout palette come from the preset (m_iGroupSize / m_aLoadoutResources).
+	// - Execute ONLY on server (called once from OnGameStart).
+	void GenerateDeploymentGroups()
+	{
+		if (!Replication.IsServer())
+			return;
+
+		SCR_FactionManager factionManager = SCR_FactionManager.Cast(GetGame().GetFactionManager());
+		if (!factionManager)
+			return;
+		SCR_GroupsManagerComponent groupsManager = SCR_GroupsManagerComponent.GetInstance();
+		if (!groupsManager)
+			return;
+		PS_PlayableManager playableManager = PS_PlayableManager.GetInstance();
+		if (!playableManager)
+			return;
+
+		array<Faction> factions = {};
+		factionManager.GetFactionsList(factions);
+		int isCampaignFM = 0;
+		if (SCR_CampaignFactionManager.Cast(factionManager))
+			isCampaignFM = 1;
+		Print("[PVE GEN] isCampaign=" + isCampaignFM + " factions=" + factions.Count(), LogLevel.NORMAL);
+		foreach (Faction faction : factions)
+		{
+			SCR_Faction scrFaction = SCR_Faction.Cast(faction);
+			if (!scrFaction)
+				continue;
+
+			array<SCR_GroupRolePresetConfig> presets = {};
+			scrFaction.GetGroupRolePresetConfigs(presets);
+			int playableInt = 0;
+			if (scrFaction.IsPlayable())
+				playableInt = 1;
+			Print("[PVE GEN] faction=" + scrFaction.GetFactionKey() + " playable=" + playableInt + " presets=" + presets.Count(), LogLevel.NORMAL);
+
+			if (!scrFaction.IsPlayable())
+				continue;
+
+			for (int i = 0, count = presets.Count(); i < count; i++)
+			{
+				SCR_GroupRolePresetConfig preset = presets[i];
+				if (!preset || !preset.IsEnabled())
+					continue;
+
+				SCR_AIGroup group = groupsManager.CreateNewPlayableGroup(faction, preset.GetGroupRole());
+				if (!group)
+				{
+					Print("[PVE GEN] CreateNewPlayableGroup FAILED for preset=" + preset.GetGroupName() + " (check Default Group Prefab)", LogLevel.WARNING);
+					continue;
+				}
+
+				// Reforger Lobby Conflict Edition: these lobby groups must survive while empty (no player has
+				// deployed into them yet). SCR_AIGroup has TWO independent auto-delete flags;
+				// setting only one still lets the empty group be culled, so disable both.
+				group.SetCanDeleteIfNoPlayer(false);
+				group.SetDeleteWhenEmpty(false);
+				preset.SetupGroup(group);
+				preset.SetupGroupFlag(group, scrFaction);
+
+				// Reforger Lobby Conflict Edition: force the preset name to be authored by the server (-1). SCR_AIGroup
+				// .GetCustomName() blanks any name authored by a real player (UGC filtering), so a name
+				// set with author 0 by SetupGroup would not display on clients. Author -1 always shows.
+				group.SetCustomName(preset.GetGroupName(), -1);
+
+				Print("[PVE GEN] created groupID=" + group.GetGroupID() + " preset=" + preset.GetGroupName() + " size=" + preset.GetGroupSize() + " loadouts=" + preset.GetLoadouts().Count(), LogLevel.NORMAL);
+				playableManager.RegisterDeploymentGroup(group.GetGroupID(), scrFaction.GetFactionKey(), i);
+			}
+		}
+	}
+
+	// Reforger Lobby Conflict Edition (PROJECT.md #1 & #3): the vanilla Conflict base (SCR_GameModeCampaign)
+	// funnels every match-ending event (faction victory, full base sweep, scenario end, admin
+	// end-game vote, etc.) through EndGameMode(). Swallow them all so the server stays in GAME
+	// 24/7 and never transitions to DEBRIEFING / POSTGAME. Objectives/base captures keep running
+	// for gameplay but can no longer stop the session.
+	override void EndGameMode(SCR_GameModeEndData endData)
+	{
+		Print("[PVE] EndGameMode suppressed - persistent 24/7 server never ends", LogLevel.WARNING);
 	}
 
 	override void OnGameStateChanged()
@@ -922,7 +1310,7 @@ class PS_GameModeCoop : SCR_BaseGameMode
 			case SCR_EGameModeState.BRIEFING:
 				StartGame();
 				break;
-			// Persistent PvE server (see PROJECT.md): once in GAME the mission runs
+			// Reforger Lobby Conflict Edition server (see PROJECT.md): once in GAME the mission runs
 			// 24/7. Never auto-advance to DEBRIEFING/POSTGAME. This also neutralizes
 			// objective-completion ending the match (PS_Objective calls
 			// AdvanceGameState(GAME), which now no-ops here).

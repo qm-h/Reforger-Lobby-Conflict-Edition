@@ -72,6 +72,17 @@ class PS_CharacterSelector : SCR_ButtonComponent
 	protected SCR_CharacterDamageManagerComponent m_CharacterDamageManagerComponent;
 	protected SCR_Faction m_Faction;
 	protected FactionKey m_sFactionKey;
+
+	// Reforger Lobby Conflict Edition deploy mode: this selector represents a loadout from a group palette
+	// (not a unique placed playable). Clicking it sets the player's group + loadout selection.
+	protected bool m_bLoadoutMode;
+	protected int m_iGroupID;
+	protected ResourceName m_sLoadoutResource;
+	protected string m_sLoadoutDisplayName;
+	// Reforger Lobby Conflict Edition spawn mode: this selector represents a world spawn point; clicking it
+	// sets the player's selected spawn point.
+	protected bool m_bSpawnMode;
+	protected RplId m_iSpawnRplId;
 	
 	// --------------------------------------------------------------------------------------------------------------------------------
 	// Init
@@ -175,6 +186,123 @@ class PS_CharacterSelector : SCR_ButtonComponent
 	{
 		return m_PlayableContainer;
 	}
+
+	// --------------------------------------------------------------------------------------------------------------------------------
+	// Reforger Lobby Conflict Edition: bind this selector to a loadout entry of a generated group.
+	void SetLoadout(int groupID, ResourceName loadoutResource, SCR_Faction faction, string displayName, ResourceName iconResource)
+	{
+		m_bLoadoutMode = true;
+		m_iGroupID = groupID;
+		m_sLoadoutResource = loadoutResource;
+		m_sLoadoutDisplayName = displayName;
+		m_Faction = faction;
+		m_sFactionKey = faction.GetFactionKey();
+
+		m_wCharacterClassName.SetText(displayName);
+		// Reforger Lobby Conflict Edition: hide the default placeholder unit icon (the AntiTank/rocket .edds set in
+		// the layout) unless a real icon is provided for this loadout.
+		if (!iconResource.IsEmpty())
+			m_wUnitIcon.LoadImageTexture(0, iconResource);
+		else
+			m_wUnitIcon.SetVisible(false);
+		m_wCharacterFactionColor.SetColor(faction.GetFactionColor());
+		m_wCharacterStatus.SetText("");
+
+		// No per-slot player state in deploy mode.
+		m_wStateIcon.SetVisible(false);
+		m_wStateButton.SetVisible(false);
+		if (m_wVoiceHideableButton)
+			m_wVoiceHideableButton.SetVisible(false);
+	}
+
+	void OnClickedLoadout()
+	{
+		SCR_UISoundEntity.SoundEvent("SOUND_HUD_GADGET_SELECT");
+		// Reforger Lobby Conflict Edition: show the selected loadout in the 3D preview.
+		m_CoopLobby.SetPreviewLoadout(m_sLoadoutResource, m_sLoadoutDisplayName);
+		// NOTE: do NOT call ChangeFactionKey here. Changing the player's faction affiliation
+		// triggers the vanilla SCR_GroupsManagerComponent auto-group-assignment
+		// (OnPlayerFactionChanged -> GetFirstNotFullForFaction) which is not part of our
+		// per-player deploy model and crashes on a null group entry. The player's faction is
+		// applied at deploy time from the spawned character (PS_PlayableManager.ApplyPlayable).
+		m_PlayableControllerComponent.SetSelectedGroup(m_iGroupID);
+		m_PlayableControllerComponent.SetSelectedLoadout(m_sLoadoutResource);
+		m_PlayableControllerComponent.MoveToVoNRoom(m_iCurrentPlayerId, m_sFactionKey, m_iGroupID.ToString());
+	}
+
+	// Reforger Lobby Conflict Edition: bind this selector to a world spawn point.
+	void SetSpawnPoint(RplId spawnRplId, SCR_Faction faction, string displayName)
+	{
+		m_bSpawnMode = true;
+		m_iSpawnRplId = spawnRplId;
+		m_Faction = faction;
+		m_sFactionKey = faction.GetFactionKey();
+
+		m_wCharacterClassName.SetText(displayName);
+		m_wCharacterFactionColor.SetColor(faction.GetFactionColor());
+		m_wCharacterStatus.SetText("");
+
+		// Reforger Lobby Conflict Edition: hide the default placeholder unit icon (AntiTank/rocket) on spawn rows.
+		m_wUnitIcon.SetVisible(false);
+		m_wStateIcon.SetVisible(false);
+		m_wStateButton.SetVisible(false);
+		if (m_wVoiceHideableButton)
+			m_wVoiceHideableButton.SetVisible(false);
+
+		// Reforger Lobby Conflict Edition: the layout reserves only 238px for the class name because loadout rows
+		// also show a state icon, player status and voice button. Spawn rows hide all of those, so
+		// let the name span the whole spawn column (460px wide, name starts at x=46) to avoid
+		// truncating long base/spawn names like "OMAHA BEACH LANDING — Military Base".
+		FrameSlot.SetSize(m_wCharacterClassName, 408, 40);
+	}
+
+	void OnClickedSpawn()
+	{
+		SCR_UISoundEntity.SoundEvent("SOUND_HUD_GADGET_SELECT");
+		m_PlayableControllerComponent.SetSelectedSpawn(m_iSpawnRplId);
+	}
+
+	// Reforger Lobby Conflict Edition: drive a persistent "selected" highlight (button toggle state) from the
+	// player's actual selection so the chosen loadout AND the chosen spawn point stay highlighted
+	// at the same time, independently of which button currently has UI focus.
+	void RefreshDeploySelection()
+	{
+		bool selected;
+		if (m_bLoadoutMode)
+		{
+			selected = m_PlayableManager.GetPlayerSelectedGroup(m_iCurrentPlayerId) == m_iGroupID
+				&& m_PlayableManager.GetPlayerSelectedLoadout(m_iCurrentPlayerId) == m_sLoadoutResource;
+			// Show which players currently picked this loadout (count + names).
+			int count = m_PlayableManager.GetLoadoutSelectedCount(m_iGroupID, m_sLoadoutResource);
+			if (count > 0)
+				m_wCharacterStatus.SetText("(" + count + ") " + m_PlayableManager.GetLoadoutSelectedNames(m_iGroupID, m_sLoadoutResource));
+			else
+				m_wCharacterStatus.SetText("");
+		}
+		else if (m_bSpawnMode)
+		{
+			RplId selectedSpawn = m_PlayableManager.GetPlayerSelectedSpawn(m_iCurrentPlayerId);
+			selected = selectedSpawn == m_iSpawnRplId;
+		}
+		else
+		{
+			return;
+		}
+
+		// Persistent toggle background (when not masked by focus/hover state) ...
+		SetToggled(selected);
+		// ... plus a focus-independent indicator: the label turns orange when selected. This is
+		// what guarantees the loadout AND the spawn both stay visibly selected at the same time.
+		if (selected)
+			m_wCharacterClassName.SetColor(m_AdminColor);
+		else
+			m_wCharacterClassName.SetColor(m_DefaultColor);
+
+		// Reforger Lobby Conflict Edition: the 3D preview always shows the currently SELECTED loadout. Hover only
+		// overrides it when nothing is selected yet (see OnHover).
+		if (m_bLoadoutMode && selected)
+			m_CoopLobby.SetPreviewLoadout(m_sLoadoutResource, m_sLoadoutDisplayName);
+	}
 	
 	// --------------------------------------------------------------------------------------------------------------------------------
 	// Update character
@@ -247,6 +375,8 @@ class PS_CharacterSelector : SCR_ButtonComponent
 	
 	void OnPlayerPlayableChange(int playerId, RplId playbleId)
 	{
+		if (m_bLoadoutMode || m_bSpawnMode)
+			return;
 		// Self kick
 		if (m_iPlayerId == m_iCurrentPlayerId)
 		{
@@ -321,6 +451,8 @@ class PS_CharacterSelector : SCR_ButtonComponent
 	
 	void OnRoleChangeCurrent(int playerId, EPlayerRole roleFlags)
 	{
+		if (m_bLoadoutMode || m_bSpawnMode)
+			return;
 		UpdateState(true);
 	}
 	
@@ -414,7 +546,8 @@ class PS_CharacterSelector : SCR_ButtonComponent
 		super.OnClick(w, x, y, button);
 		if (button == 1)
 		{
-			OpenContext();
+			if (!m_bLoadoutMode && !m_bSpawnMode)
+				OpenContext();
 			return false;
 		}
 		if (button != 0)
@@ -428,6 +561,17 @@ class PS_CharacterSelector : SCR_ButtonComponent
 		if (m_bStateClickSkip)
 		{
 			m_bStateClickSkip = false;
+			return;
+		}
+
+		if (m_bSpawnMode)
+		{
+			OnClickedSpawn();
+			return;
+		}
+		if (m_bLoadoutMode)
+		{
+			OnClickedLoadout();
 			return;
 		}
 		
@@ -497,11 +641,26 @@ class PS_CharacterSelector : SCR_ButtonComponent
 	
 	void OnHover()
 	{
+		if (m_bSpawnMode)
+			return;
+		if (m_bLoadoutMode)
+		{
+			// Reforger Lobby Conflict Edition: the selected loadout has priority in the preview. Only preview the
+			// hovered loadout when the player has NOT selected one yet ("selection at zero").
+			if (m_PlayableManager.GetPlayerSelectedLoadout(m_iCurrentPlayerId) != "")
+				return;
+			m_CoopLobby.SetPreviewLoadout(m_sLoadoutResource, m_sLoadoutDisplayName);
+			return;
+		}
 		m_CoopLobby.SetPreviewPlayable(m_PlayableContainer.GetRplId(), false);
 	}
 	
 	void OnHoverLeave()
 	{
+		// Reforger Lobby Conflict Edition: in loadout/spawn mode keep the last preview on screen instead of
+		// clearing it (so the chosen loadout stays visible when the cursor leaves the palette).
+		if (m_bLoadoutMode || m_bSpawnMode)
+			return;
 		m_CoopLobby.SetPreviewPlayable(RplId.Invalid(), false);
 	}
 	

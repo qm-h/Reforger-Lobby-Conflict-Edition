@@ -1,0 +1,31 @@
+FrameWidgetClass {
+ "Is Enabled" 0
+ "Is Visible" 0
+ {
+  OverlayWidgetClass "{60D306CB65DCE7C5}" {
+   Prefab "{60D306CB65DCE7C5}"
+   "Is Enabled" 0
+   "Is Visible" 0
+  }
+  OverlayWidgetClass "{5F38B78BFC66B933}" {
+   Prefab "{5F38B78BFC66B933}"
+   "Is Enabled" 0
+   "Is Visible" 0
+  }
+  OverlayWidgetClass "{60D306CB65DCE7C5}" {
+   Prefab "{60D306CB65DCE7C5}"
+   "Is Enabled" 0
+   "Is Visible" 0
+  }
+  OverlayWidgetClass "{5F38B78BFC66B933}" {
+   Prefab "{5F38B78BFC66B933}"
+   "Is Enabled" 0
+   "Is Visible" 0
+  }
+  VerticalLayoutWidgetClass "{5F38BC5003156AEA}" {
+   Prefab "{5F38BC5003156AEA}"
+   "Is Enabled" 0
+   "Is Visible" 0
+  }
+ }
+}
